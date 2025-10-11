@@ -16,8 +16,8 @@ private:
 
 public:
    Seller(BankCustomer *customerSeller, Items *itemsSeller);
-   BankCustomer *getCustomer() const { return customer; }
-   Items *getItems() const { return items; }
+   BankCustomer *getCustomer() const;
+   Items *getItems() const;
    void addItem(const Item &item);
    void displayItem(uint id);
 };
