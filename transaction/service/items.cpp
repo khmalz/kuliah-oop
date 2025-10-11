@@ -13,7 +13,7 @@ void Items::showAllItems()
    }
 }
 
-void Items::removeItem(unsigned int itemId)
+void Items::removeItem(uint itemId)
 {
    for (auto it = items.begin(); it != items.end(); ++it)
    {
@@ -26,7 +26,7 @@ void Items::removeItem(unsigned int itemId)
    throw std::runtime_error("Item not found");
 }
 
-void Items::updateItem(unsigned int itemId, const Item &newItem)
+void Items::updateItem(uint itemId, const Item &newItem)
 {
    for (auto &item : items)
    {

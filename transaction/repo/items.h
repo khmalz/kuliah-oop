@@ -15,8 +15,8 @@ public:
    void addItem(const Item &item);
    vector<Item> &getItems();
    void showAllItems();
-   void removeItem(unsigned int itemId);
-   void updateItem(unsigned int itemId, const Item &newItem);
+   void removeItem(uint itemId);
+   void updateItem(uint itemId, const Item &newItem);
 };
 
 #endif
