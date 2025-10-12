@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <ctime>
 
+#include "repo/bank.h"
 #include "repo/buyer.h"
 #include "repo/seller.h"
 #include "repo/items.h"
@@ -19,6 +20,7 @@ using namespace std;
 // =======================================================
 vector<Buyer> buyers;
 vector<Seller> sellers;
+Bank mainBank;
 
 Buyer *loggedInBuyer = nullptr;
 Seller *loggedInSeller = nullptr;
@@ -483,7 +485,8 @@ void handleRegisterBuyer()
    uint newId = buyers.size() + 1;
    buyers.emplace_back(newId, name, email, initialDeposit);
 
-   // Simpan pesan ke "papan pesan" global
+   mainBank.addCustomer(*(buyers.back().getCustomer()));
+
    globalMessage = "Registrasi berhasil! ID Buyer Anda adalah " + to_string(newId);
 }
 
@@ -591,8 +594,101 @@ void handleCheckStatus()
 }
 
 // =======================================================
+// Handler untuk Bank
+// =======================================================
+
+void handleListAllBankCustomers()
+{
+   clearScreen();
+   printHeader("Daftar Semua Nasabah Bank");
+   mainBank.showAllCustomers();
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+void handleListRecentBankTransactions()
+{
+   clearScreen();
+   mainBank.listRecentTransactions(transactionLog);
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+void handleListDormantAccounts()
+{
+   clearScreen();
+   mainBank.listDormantAccounts(transactionLog);
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+void handleListTopUsers()
+{
+   clearScreen();
+   printHeader("Top Pengguna Aktif Hari Ini");
+   int n;
+   cout << "Berapa pengguna teratas yang ingin ditampilkan? ";
+   cin >> n;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   mainBank.listTopUsersToday(transactionLog, n);
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+// =======================================================
 // Hadnler untuk Menampilkan Menu-Menu
 // =======================================================
+
+void showBankMenu()
+{
+   int choice = 0;
+   while (true)
+   {
+      clearScreen();
+      printHeader("Menu Laporan Bank");
+      displayGlobalMessage();
+
+      cout << "1. Tampilkan Semua Nasabah\n";
+      cout << "2. Tampilkan Transaksi (1 Minggu Terakhir)\n";
+      cout << "3. Tampilkan Akun Dormant (>30 Hari)\n";
+      cout << "4. Tampilkan Top Pengguna Hari Ini\n";
+      cout << "5. Kembali ke Menu Utama\n";
+      cout << "----------------------------------------\n";
+      cout << "Pilihan Anda: ";
+      cin >> choice;
+
+      if (cin.fail())
+      {
+         cin.clear();
+         globalMessage = "Input tidak valid.";
+         choice = 0;
+      }
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      switch (choice)
+      {
+      case 1:
+         handleListAllBankCustomers();
+         break;
+      case 2:
+         handleListRecentBankTransactions();
+         break;
+      case 3:
+         handleListDormantAccounts();
+         break;
+      case 4:
+         handleListTopUsers();
+         break;
+      case 5:
+         return;
+      default:
+         if (choice != 0)
+            globalMessage = "Pilihan tidak valid.";
+         break;
+      }
+   }
+}
 
 void showBuyerMenu()
 {
@@ -690,18 +786,19 @@ void showLoggedInMenu()
 
       cout << "1. Cek Status Akun\n";
       cout << "2. Menu Pembeli\n";
-      cout << "3. Upgrade Akun ke Seller\n";
+      cout << "3. Menu Bank\n";
+      cout << "4. Upgrade Akun ke Seller\n";
 
       int sellerMenuOption = 0;
-      int logoutOption = 4;
-      int exitOption = 5;
+      int logoutOption = 5;
+      int exitOption = 6;
 
       if (loggedInSeller)
       {
-         sellerMenuOption = 4;
+         sellerMenuOption = 5;
          cout << sellerMenuOption << ". Kelola Toko\n";
-         logoutOption = 5;
-         exitOption = 6;
+         logoutOption = 6;
+         exitOption = 7;
       }
 
       cout << logoutOption << ". Logout\n";
@@ -721,6 +818,10 @@ void showLoggedInMenu()
       if (choice == 2)
       {
          showBuyerMenu();
+      }
+      else if (choice == 3)
+      {
+         showBankMenu();
       }
       else if (loggedInSeller && choice == sellerMenuOption)
       {
@@ -742,7 +843,7 @@ void showLoggedInMenu()
          case 1:
             handleCheckStatus();
             break;
-         case 3:
+         case 4:
             handleUpgradeToSeller();
             break;
          default:

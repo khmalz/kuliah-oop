@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void clearScreen()
+inline void clearScreen()
 {
 #if defined(__unix__) || defined(__APPLE__)
    cout << "\033[2J\033[1;1H";
@@ -16,14 +16,14 @@ void clearScreen()
 #endif
 }
 
-void printHeader(const string &title)
+inline void printHeader(const string &title)
 {
    cout << "========================================\n";
    cout << "     " << title << "\n";
    cout << "========================================\n\n";
 }
 
-string statusToString(OrderStatus status)
+inline string statusToString(OrderStatus status)
 {
    switch (status)
    {
