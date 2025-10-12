@@ -48,6 +48,21 @@ void printHeader(const string &title)
    cout << "========================================\n\n";
 }
 
+string statusToString(OrderStatus status)
+{
+   switch (status)
+   {
+   case PAID:
+      return "Paid";
+   case COMPLETED:
+      return "Completed";
+   case CANCELED:
+      return "Canceled";
+   default:
+      return "Unknown";
+   }
+}
+
 // FUNGSI BARU: Untuk menampilkan dan menghapus pesan global
 void displayGlobalMessage()
 {
@@ -353,6 +368,132 @@ void showManageStoreMenu()
 }
 
 // =======================================================
+// Handler untuk Aksi-Aksi Buyer
+// =======================================================
+
+void handlePurchaseItem()
+{
+   clearScreen();
+   printHeader("Beli Barang");
+
+   if (sellers.empty())
+   {
+      globalMessage = "Maaf, belum ada toko yang buka saat ini.";
+      return;
+   }
+
+   cout << "Daftar Barang yang Tersedia:\n";
+   cout << "--------------------------------------------------------\n";
+   for (auto &seller : sellers)
+   {
+      if (!seller.getStoreItems()->getItems().empty())
+      {
+         cout << "Toko: " << seller.getStoreName() << "\n";
+         seller.getStoreItems()->showAllItems();
+         cout << "\n";
+      }
+   }
+   cout << "--------------------------------------------------------\n";
+
+   unsigned int itemId;
+   int quantity;
+
+   cout << "Masukkan ID Item yang ingin dibeli: ";
+   cin >> itemId;
+   cout << "Masukkan Jumlah: ";
+   cin >> quantity;
+
+   Seller *targetSeller = nullptr;
+   Items *targetItems = nullptr;
+
+   for (auto &seller : sellers)
+   {
+      Item *item = seller.getStoreItems()->findItemById(itemId);
+      if (item)
+      {
+         targetSeller = &seller;
+         targetItems = seller.getStoreItems();
+         break;
+      }
+   }
+
+   if (!targetSeller)
+   {
+      globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan di toko mana pun.";
+      return;
+   }
+
+   try
+   {
+      loggedInBuyer->buyItem(targetSeller, *targetItems, itemId, quantity, transactionLog);
+      globalMessage = "Pembelian berhasil!";
+   }
+   catch (const runtime_error &e)
+   {
+      globalMessage = "Error: " + string(e.what());
+   }
+}
+
+void handleListOrders()
+{
+   clearScreen();
+   printHeader("Riwayat Pesanan Anda");
+
+   cout << "Menampilkan semua pesanan Anda:\n\n";
+
+   bool hasOrders = false;
+   for (const auto &record : transactionLog)
+   {
+      if (record.buyerId == loggedInBuyer->getId())
+      {
+         cout << "Toko     : " << record.sellerStoreName << "\n";
+         cout << "Item     : " << record.itemName << " (x" << record.quantity << ")\n";
+         cout << "Total    : Rp " << record.totalPrice << "\n";
+         cout << "Status   : " << statusToString(record.status) << "\n";
+         cout << "----------------------------------------\n";
+         hasOrders = true;
+      }
+   }
+
+   if (!hasOrders)
+   {
+      cout << "Anda belum memiliki riwayat pesanan.\n";
+   }
+
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+void handleCheckSpending()
+{
+   clearScreen();
+   printHeader("Analisis Pengeluaran");
+
+   int k_days;
+   cout << "Cek total pengeluaran dalam (k) hari terakhir.\n";
+   cout << "Masukkan jumlah hari (k): ";
+   cin >> k_days;
+
+   double totalSpending = 0;
+   auto now = chrono::system_clock::now();
+   auto k_days_ago = now - chrono::hours(24 * k_days);
+
+   for (const auto &record : transactionLog)
+   {
+      if (record.buyerId == loggedInBuyer->getId() && record.transactionDate >= k_days_ago)
+      {
+         totalSpending += record.totalPrice;
+      }
+   }
+
+   cout << "\nTotal pengeluaran Anda dalam " << k_days << " hari terakhir adalah: Rp " << totalSpending << "\n";
+
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   cin.get();
+}
+
+// =======================================================
 // Handler untuk Aksi-Aksi (sekarang menggunakan globalMessage)
 // =======================================================
 
@@ -492,6 +633,52 @@ void handleCheckStatus()
 // Fungsi untuk Menampilkan Menu-Menu
 // =======================================================
 
+void showBuyerMenu()
+{
+   int choice = 0;
+   while (true)
+   {
+      clearScreen();
+      printHeader("Menu Pembeli");
+      displayGlobalMessage();
+
+      cout << "1. Beli Barang\n";
+      cout << "2. Lihat Riwayat Pesanan\n";
+      cout << "3. Cek Pengeluaran Terakhir\n";
+      cout << "4. Kembali ke Menu Utama\n";
+      cout << "----------------------------------------\n";
+      cout << "Pilihan Anda: ";
+      cin >> choice;
+
+      if (cin.fail())
+      {
+         cin.clear();
+         globalMessage = "Input tidak valid.";
+         choice = 0;
+      }
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      switch (choice)
+      {
+      case 1:
+         handlePurchaseItem();
+         break;
+      case 2:
+         handleListOrders();
+         break;
+      case 3:
+         handleCheckSpending();
+         break;
+      case 4:
+         return;
+      default:
+         if (choice != 0)
+            globalMessage = "Pilihan tidak valid.";
+         break;
+      }
+   }
+}
+
 void showRegisterMenu()
 {
    int choice = 0;
@@ -533,6 +720,7 @@ void showRegisterMenu()
 void showLoggedInMenu()
 {
    int choice = 0;
+
    while (loggedInBuyer)
    {
       clearScreen();
@@ -540,15 +728,19 @@ void showLoggedInMenu()
       displayGlobalMessage();
 
       cout << "1. Cek Status Akun\n";
-      cout << "2. Upgrade Akun ke Seller\n";
+      cout << "2. Menu Pembeli\n";
+      cout << "3. Upgrade Akun ke Seller\n";
 
-      int logoutOption = 3;
-      int exitOption = 4;
+      int sellerMenuOption = 0;
+      int logoutOption = 4;
+      int exitOption = 5;
+
       if (loggedInSeller)
       {
-         cout << "3. Kelola Toko\n";
-         logoutOption = 4;
-         exitOption = 5;
+         sellerMenuOption = 4;
+         cout << sellerMenuOption << ". Kelola Toko\n";
+         logoutOption = 5;
+         exitOption = 6;
       }
 
       cout << logoutOption << ". Logout\n";
@@ -565,7 +757,11 @@ void showLoggedInMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      if (loggedInSeller && choice == 3)
+      if (choice == 2)
+      {
+         showBuyerMenu();
+      }
+      else if (loggedInSeller && choice == sellerMenuOption)
       {
          showManageStoreMenu();
       }
@@ -585,7 +781,7 @@ void showLoggedInMenu()
          case 1:
             handleCheckStatus();
             break;
-         case 2:
+         case 3:
             handleUpgradeToSeller();
             break;
          default:

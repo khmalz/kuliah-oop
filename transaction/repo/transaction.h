@@ -1,21 +1,42 @@
-#ifndef TRANSACTION__H
-#define TRANSACTION__H
+#ifndef TRANSACTION_H
+#define TRANSACTION_H
 
 #include <chrono>
+#include <string>
+
 using namespace std;
+using namespace chrono;
+
+enum OrderStatus
+{
+  PAID,
+  COMPLETED,
+  CANCELED
+};
 
 struct Transaction
 {
-   unsigned int buyerId;
-   unsigned int sellerId;
-   unsigned int itemId;
-   int quantity;
-   double totalPrice;
-   chrono::system_clock::time_point transactionDate;
+  unsigned int buyerId;
+  unsigned int sellerId;
+  unsigned int itemId;
 
-   Transaction(unsigned int bId, unsigned int sId, unsigned int iId, int qty, double price)
-       : buyerId(bId), sellerId(sId), itemId(iId), quantity(qty), totalPrice(price),
-         transactionDate(chrono::system_clock::now()) {}
+  string itemName;
+  string sellerStoreName;
+
+  int quantity;
+  double totalPrice;
+
+  system_clock::time_point transactionDate;
+  OrderStatus status;
+
+  Transaction(unsigned int bId, unsigned int sId, unsigned int iId, const string &iName, const string &sName, int qty, double price)
+      : buyerId(bId), sellerId(sId), itemId(iId),
+        itemName(iName), sellerStoreName(sName),
+        quantity(qty), totalPrice(price),
+        transactionDate(system_clock::now()),
+        status(PAID)
+  {
+  }
 };
 
 #endif

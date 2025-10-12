@@ -27,6 +27,11 @@ void Buyer::buyItem(Seller *seller, Items &items, unsigned int itemId, int qty, 
       throw runtime_error("Item not found");
    }
 
+   if (item->getQuantity() < qty)
+   {
+      throw runtime_error("Stock not enough");
+   }
+
    double totalPrice = item->getPrice() * qty;
    if (customer.getBalance() < totalPrice)
    {
@@ -37,9 +42,12 @@ void Buyer::buyItem(Seller *seller, Items &items, unsigned int itemId, int qty, 
    seller->getCustomerAccount()->deposit(totalPrice);
    item->decreaseQuantity(qty);
 
-   log.emplace_back(this->id, seller->getBuyer()->getId(), itemId, qty, totalPrice);
-
-   cout << customer.getName() << " bought " << qty
-        << " x " << item->getName()
-        << " for " << totalPrice << endl;
+   log.emplace_back(
+       this->id,
+       seller->getBuyer()->getId(),
+       itemId,
+       item->getName(),
+       seller->getStoreName(),
+       qty,
+       totalPrice);
 }
