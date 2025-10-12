@@ -1,25 +1,29 @@
-#ifndef BUYER_CUSTOMER_H
-#define BUYER_CUSTOMER_H
+#ifndef BANK_CUSTOMER_H
+#define BANK_CUSTOMER_H
 
 #include <iostream>
 #include <string>
-
-using namespace std;
 
 class BankCustomer
 {
 private:
    uint id;
-   string name;
+   std::string name;
+   std::string email;
    uint bankAccountId;
-   int balance;
+   double balance;
 
 public:
-   BankCustomer(uint id, string name, uint bankAccountId, int balance);
+   BankCustomer(uint id, const std::string &name, const std::string &email, uint bankAccountId, double initialDeposit);
+
+   BankCustomer() = default;
+
    uint getId() const;
-   string getName() const;
+   std::string getName() const;
+   std::string getEmail() const;
    uint getBankAccountId() const;
-   int getBalance() const;
+   double getBalance() const;
+
    void withdraw(double amount);
    void deposit(double amount);
 };

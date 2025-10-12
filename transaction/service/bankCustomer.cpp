@@ -1,22 +1,22 @@
 #include "../repo/bankCustomer.h"
-#include "../repo/bank.h"
 #include <string>
 #include <iostream>
 
-using namespace std;
+BankCustomer::BankCustomer(uint id, const std::string &name, const std::string &email, uint bankAccountId, double initialDeposit)
+    : id(id), name(name), email(email), bankAccountId(bankAccountId), balance(initialDeposit) {}
 
-BankCustomer::BankCustomer(uint id, string name, uint bankAccountId, int balance) : id(id), name(name), bankAccountId(bankAccountId), balance(balance) {}
 uint BankCustomer::getId() const { return id; }
-string BankCustomer::getName() const { return name; }
+std::string BankCustomer::getName() const { return name; }
+std::string BankCustomer::getEmail() const { return email; }
 uint BankCustomer::getBankAccountId() const { return bankAccountId; }
-
-int BankCustomer::getBalance() const
-{
-   return balance;
-}
+double BankCustomer::getBalance() const { return balance; }
 
 void BankCustomer::withdraw(double amount)
 {
+   if (amount > balance)
+   {
+      throw std::runtime_error("Withdrawal amount exceeds balance.");
+   }
    balance -= amount;
 }
 

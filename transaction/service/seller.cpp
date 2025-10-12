@@ -1,31 +1,28 @@
 #include "../repo/seller.h"
-#include "../repo/item.h"
-#include "../repo/items.h"
 
-Seller::Seller(BankCustomer *customerSeller, Items *itemsSeller)
-    : customer(customerSeller), items(itemsSeller) {}
-
-BankCustomer *Seller::getCustomer() const
+Seller::Seller(Buyer *buyerRef, const std::string &storeName, const std::string &storeAddress, const std::string &storeEmail)
+    : buyer(buyerRef), storeName(storeName), storeAddress(storeAddress), storeEmail(storeEmail)
 {
-    return customer;
 }
 
-Items *Seller::getItems() const { return items; }
-
-void Seller::addItem(const Item &item)
+Buyer *Seller::getBuyer() const
 {
-    items->addItem(item);
+    return buyer;
 }
 
-void Seller::displayItem(uint id)
+std::string Seller::getStoreName() const
 {
-    for (auto &item : items->getItems())
-    {
-        if (item.getId() == id)
-        {
-            item.showItem();
-            return;
-        }
-    }
-    throw std::runtime_error("Item not found");
+    return storeName;
+}
+
+BankCustomer *Seller::getCustomerAccount() const
+{
+    return buyer->getCustomer();
+}
+
+void Seller::addItem(Items &allItems, const Item &newItem)
+{
+    allItems.addItem(newItem);
+    std::cout << "Seller " << buyer->getName() << " from store " << storeName
+              << " added item " << newItem.getName() << std::endl;
 }

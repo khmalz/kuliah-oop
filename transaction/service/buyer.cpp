@@ -1,8 +1,18 @@
 #include "../repo/buyer.h"
+#include <stdexcept>
+#include <iostream>
 
-Buyer::Buyer(BankCustomer *customerParams) : customer(customerParams) {}
+Buyer::Buyer(uint id, const std::string &name, const std::string &email, double initialDeposit)
+    : id(id), name(name), email(email),
+      customer(id, name, email, id + 1000, initialDeposit)
+{
+}
 
-BankCustomer *Buyer::getCustomer() const { return customer; }
+uint Buyer::getId() const { return id; }
+std::string Buyer::getName() const { return name; }
+std::string Buyer::getEmail() const { return email; }
+
+BankCustomer *Buyer::getCustomer() { return &customer; }
 
 void Buyer::buyItem(Items &items, uint itemId, int qty)
 {
@@ -12,19 +22,19 @@ void Buyer::buyItem(Items &items, uint itemId, int qty)
       {
          double totalPrice = item.getPrice() * qty;
 
-         if (customer->getBalance() < totalPrice)
+         if (customer.getBalance() < totalPrice)
+         {
             throw std::runtime_error("Not enough balance");
+         }
 
-         customer->withdraw(totalPrice);
-
+         customer.withdraw(totalPrice);
          item.decreaseQuantity(qty);
 
-         cout << customer->getName() << " bought " << qty
-              << " x " << item.getName()
-              << " for " << totalPrice << endl;
+         std::cout << customer.getName() << " bought " << qty
+                   << " x " << item.getName()
+                   << " for " << totalPrice << std::endl;
          return;
       }
    }
-
    throw std::runtime_error("Item not found");
 }
