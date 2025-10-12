@@ -358,7 +358,7 @@ void handlePurchaseItem()
    }
    cout << "--------------------------------------------------------\n";
 
-   unsigned int itemId;
+   uint itemId;
    int quantity;
 
    cout << "Masukkan ID Item yang ingin dibeli: ";

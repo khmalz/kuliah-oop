@@ -102,7 +102,7 @@ void Bank::listDormantAccounts(const vector<Transaction> &log) const
 {
    printHeader("Akun Dormant (Tidak Aktif > 30 Hari)");
 
-   map<unsigned int, system_clock::time_point> lastActivity;
+   map<uint, system_clock::time_point> lastActivity;
 
    for (const auto &record : log)
    {
@@ -152,7 +152,7 @@ void Bank::listTopUsersToday(const vector<Transaction> &log, int n) const
 {
    printHeader("Top " + to_string(n) + " Pengguna Aktif Hari Ini");
 
-   map<unsigned int, int> userTransactionCount;
+   map<uint, int> userTransactionCount;
 
    for (const auto &record : log)
    {
@@ -169,7 +169,7 @@ void Bank::listTopUsersToday(const vector<Transaction> &log, int n) const
       return;
    }
 
-   vector<pair<unsigned int, int>> sortedUsers(userTransactionCount.begin(), userTransactionCount.end());
+   vector<pair<uint, int>> sortedUsers(userTransactionCount.begin(), userTransactionCount.end());
    sort(sortedUsers.begin(), sortedUsers.end(), [](const auto &a, const auto &b)
         { return a.second > b.second; });
 

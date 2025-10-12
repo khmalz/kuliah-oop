@@ -19,7 +19,7 @@ string Buyer::getEmail() const { return email; }
 
 BankCustomer *Buyer::getCustomer() { return &customer; }
 
-void Buyer::buyItem(Seller *seller, Items &items, unsigned int itemId, int qty, vector<Transaction> &log)
+void Buyer::buyItem(Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log)
 {
    Item *item = items.findItemById(itemId);
    if (!item)

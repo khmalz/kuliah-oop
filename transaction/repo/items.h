@@ -14,7 +14,7 @@ private:
 public:
    void addItem(const Item &item);
    vector<Item> &getItems();
-   Item *findItemById(unsigned int itemId);
+   Item *findItemById(uint itemId);
    void showAllItems();
    void removeItem(uint itemId);
    void updateItem(uint itemId, const Item &newItem);

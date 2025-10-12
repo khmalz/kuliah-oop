@@ -14,11 +14,11 @@ private:
 
 public:
    void addCustomer(const BankCustomer &customer);
-   BankCustomer *findCustomerById(unsigned int id);
+   BankCustomer *findCustomerById(uint id);
    const vector<BankCustomer> &getAllCustomers() const;
    void showAllCustomers();
 
-   void transfer(unsigned int from, unsigned int to, double amount);
+   void transfer(uint from, uint to, double amount);
 
    void listRecentTransactions(const vector<Transaction> &log) const;
    void listDormantAccounts(const vector<Transaction> &log) const;

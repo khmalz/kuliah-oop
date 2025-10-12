@@ -4,7 +4,7 @@ void Items::addItem(const Item &item) { items.push_back(item); }
 
 vector<Item> &Items::getItems() { return items; }
 
-Item *Items::findItemById(unsigned int itemId)
+Item *Items::findItemById(uint itemId)
 {
    for (auto &item : items)
    {
