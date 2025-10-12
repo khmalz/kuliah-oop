@@ -26,6 +26,7 @@ public:
    void setPrice(double newPrice);
    void setQuantity(int newQuantity);
 
+   void increaseQuantity(int amount);
    void decreaseQuantity(int amount);
 
    void showItem() const;

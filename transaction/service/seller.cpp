@@ -1,6 +1,7 @@
 #include "../repo/seller.h"
+#include "../repo/buyer.h"
 
-Seller::Seller(Buyer *buyerRef, const std::string &storeName, const std::string &storeAddress, const std::string &storeEmail)
+Seller::Seller(Buyer *buyerRef, const string &storeName, const string &storeAddress, const string &storeEmail)
     : buyer(buyerRef), storeName(storeName), storeAddress(storeAddress), storeEmail(storeEmail)
 {
 }
@@ -10,7 +11,7 @@ Buyer *Seller::getBuyer() const
     return buyer;
 }
 
-std::string Seller::getStoreName() const
+string Seller::getStoreName() const
 {
     return storeName;
 }
@@ -20,9 +21,7 @@ BankCustomer *Seller::getCustomerAccount() const
     return buyer->getCustomer();
 }
 
-void Seller::addItem(Items &allItems, const Item &newItem)
+Items *Seller::getStoreItems()
 {
-    allItems.addItem(newItem);
-    std::cout << "Seller " << buyer->getName() << " from store " << storeName
-              << " added item " << newItem.getName() << std::endl;
+    return &storeItems;
 }

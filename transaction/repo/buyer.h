@@ -3,26 +3,30 @@
 
 #include "bankCustomer.h"
 #include "items.h"
+#include "transaction.h"
 #include <string>
+
+using namespace std;
+
+class Seller;
 
 class Buyer
 {
 private:
    uint id;
-   std::string name;
-   std::string email;
+   string name;
+   string email;
    BankCustomer customer;
 
 public:
-   Buyer(uint id, const std::string &name, const std::string &email, double initialDeposit);
+   Buyer(uint id, const string &name, const string &email, double initialDeposit);
 
-   // Getter
    uint getId() const;
-   std::string getName() const;
-   std::string getEmail() const;
+   string getName() const;
+   string getEmail() const;
    BankCustomer *getCustomer();
 
-   void buyItem(Items &items, uint itemId, int qty);
+   void buyItem(Seller *seller, Items &items, unsigned int itemId, int qty, vector<Transaction> &log);
 };
 
 #endif

@@ -1,26 +1,30 @@
 #ifndef SELLER_H
 #define SELLER_H
 
-#include "buyer.h"
 #include "items.h"
 #include <string>
+
+using namespace std;
+
+class Buyer;
+class BankCustomer;
 
 class Seller
 {
 private:
    Buyer *buyer;
-   std::string storeName;
-   std::string storeAddress;
-   std::string storeEmail;
+   string storeName;
+   string storeAddress;
+   string storeEmail;
+   Items storeItems;
 
 public:
-   Seller(Buyer *buyer, const std::string &storeName, const std::string &storeAddress, const std::string &storeEmail);
+   Seller(Buyer *buyer, const string &storeName, const string &storeAddress, const string &storeEmail);
 
    Buyer *getBuyer() const;
-   std::string getStoreName() const;
+   string getStoreName() const;
    BankCustomer *getCustomerAccount() const;
-
-   void addItem(Items &allItems, const Item &newItem);
+   Items *getStoreItems();
 };
 
 #endif

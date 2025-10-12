@@ -2,10 +2,14 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <map>
+#include <algorithm>
+#include <ctime>
 
 #include "repo/buyer.h"
 #include "repo/seller.h"
 #include "repo/items.h"
+#include "repo/transaction.h"
 
 using namespace std;
 
@@ -14,13 +18,13 @@ using namespace std;
 // =======================================================
 vector<Buyer> buyers;
 vector<Seller> sellers;
-Items allItems;
 
 Buyer *loggedInBuyer = nullptr;
 Seller *loggedInSeller = nullptr;
+vector<Transaction> transactionLog;
 
-// VARIABEL BARU: "Papan Pesan" untuk menampilkan pesan di layar berikutnya
 string globalMessage = "";
+uint nextItemId = 1;
 
 // =======================================================
 // Fungsi Utilitas Tampilan
@@ -53,6 +57,298 @@ void displayGlobalMessage()
       cout << ">> " << globalMessage << "\n";
       cout << "----------------------------------------\n\n";
       globalMessage = ""; // Hapus pesan setelah ditampilkan
+   }
+}
+
+// =======================================================
+// Handler untuk Aksi-Aksi Toko (BARU)
+// =======================================================
+
+void handleRegisterNewItem()
+{
+   clearScreen();
+   printHeader("Daftarkan Item Baru");
+
+   string name;
+   double price;
+   int quantity;
+
+   cout << "Nama Item      : ";
+   getline(cin, name);
+   cout << "Harga per Item : Rp ";
+   cin >> price;
+   cout << "Jumlah Stok    : ";
+   cin >> quantity;
+
+   // Ambil inventaris milik seller yang login
+   Items *store = loggedInSeller->getStoreItems();
+
+   // Buat item baru dengan ID unik
+   Item newItem(nextItemId++, name, price, quantity);
+   store->addItem(newItem);
+
+   globalMessage = "Item '" + name + "' berhasil didaftarkan!";
+}
+
+void handleUpdateExistingItem()
+{
+   clearScreen();
+   printHeader("Update Item");
+
+   Items *store = loggedInSeller->getStoreItems();
+   if (store->getItems().empty())
+   {
+      globalMessage = "Anda belum memiliki item untuk diupdate.";
+      return;
+   }
+
+   cout << "Item yang Anda miliki:\n";
+   store->showAllItems();
+   cout << "----------------------------------------\n";
+
+   uint itemId;
+   cout << "Masukkan ID item yang ingin diupdate: ";
+   cin >> itemId;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   Item *itemToUpdate = store->findItemById(itemId);
+   if (!itemToUpdate)
+   {
+      globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan.";
+      return;
+   }
+
+   // Sub-menu untuk update
+   clearScreen();
+   printHeader("Mengupdate: " + itemToUpdate->getName());
+   cout << "1. Tambah Stok (Replenish)\n";
+   cout << "2. Ubah Harga\n";
+   cout << "3. Buang Item (Discard)\n";
+   cout << "Pilihan Anda: ";
+   int choice;
+   cin >> choice;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   switch (choice)
+   {
+   case 1:
+   {
+      int amount;
+      cout << "Jumlah stok yang ingin ditambahkan: ";
+      cin >> amount;
+      itemToUpdate->increaseQuantity(amount);
+      globalMessage = "Stok berhasil ditambahkan.";
+      break;
+   }
+   case 2:
+   {
+      double newPrice;
+      cout << "Harga baru: Rp ";
+      cin >> newPrice;
+      itemToUpdate->setPrice(newPrice);
+      globalMessage = "Harga berhasil diubah.";
+      break;
+   }
+   case 3:
+   {
+      store->removeItem(itemId);
+      globalMessage = "Item berhasil dibuang.";
+      break;
+   }
+   default:
+      globalMessage = "Pilihan update tidak valid.";
+      break;
+   }
+}
+
+pair<int, int> getMonthYear(const chrono::system_clock::time_point &timepoint)
+{
+   time_t time = chrono::system_clock::to_time_t(timepoint);
+   tm *localTime = localtime(&time);
+   return {localTime->tm_mon + 1, localTime->tm_year + 1900};
+}
+
+void handleTopKItems()
+{
+   clearScreen();
+   printHeader("Item Terpopuler per Bulan");
+
+   int month, year, k;
+   cout << "Masukkan Bulan (1-12): ";
+   cin >> month;
+   cout << "Masukkan Tahun (cth: 2025): ";
+   cin >> year;
+   cout << "Berapa item teratas (K): ";
+   cin >> k;
+
+   map<uint, int> itemPopularity;
+   for (const auto &record : transactionLog)
+   {
+      if (record.sellerId == loggedInSeller->getBuyer()->getId())
+      {
+         pair<int, int> recordDate = getMonthYear(record.transactionDate);
+         if (recordDate.first == month && recordDate.second == year)
+         {
+            itemPopularity[record.itemId] += record.quantity;
+         }
+      }
+   }
+
+   if (itemPopularity.empty())
+   {
+      globalMessage = "Tidak ada data penjualan untuk periode tersebut.";
+      return;
+   }
+
+   vector<pair<uint, int>> sortedItems(itemPopularity.begin(), itemPopularity.end());
+   sort(sortedItems.begin(), sortedItems.end(), [](const auto &a, const auto &b)
+        { return a.second > b.second; });
+
+   clearScreen();
+   printHeader("Top " + to_string(k) + " Item Populer");
+   cout << "Periode: " << month << "/" << year << endl
+        << endl;
+   int count = 0;
+   for (const auto &pair : sortedItems)
+   {
+      if (count++ >= k)
+         break;
+      Item *item = loggedInSeller->getStoreItems()->findItemById(pair.first);
+      if (item)
+      {
+         cout << count << ". " << item->getName()
+              << " (ID: " << pair.first << ") - Terjual: "
+              << pair.second << " unit\n";
+      }
+   }
+
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   cin.get();
+}
+
+void handleLoyalCustomers()
+{
+   clearScreen();
+   printHeader("Pelanggan Loyal per Bulan");
+
+   int month, year;
+   cout << "Masukkan Bulan (1-12): ";
+   cin >> month;
+   cout << "Masukkan Tahun (cth: 2025): ";
+   cin >> year;
+
+   map<uint, int> customerFrequency;
+   for (const auto &record : transactionLog)
+   {
+      if (record.sellerId == loggedInSeller->getBuyer()->getId())
+      {
+         pair<int, int> recordDate = getMonthYear(record.transactionDate);
+         if (recordDate.first == month && recordDate.second == year)
+         {
+            customerFrequency[record.buyerId]++;
+         }
+      }
+   }
+
+   if (customerFrequency.empty())
+   {
+      globalMessage = "Tidak ada data pelanggan untuk periode tersebut.";
+      return;
+   }
+
+   vector<pair<uint, int>> sortedCustomers(customerFrequency.begin(), customerFrequency.end());
+   sort(sortedCustomers.begin(), sortedCustomers.end(), [](const auto &a, const auto &b)
+        { return a.second > b.second; });
+
+   clearScreen();
+   printHeader("Top 3 Pelanggan Loyal");
+   cout << "Periode: " << month << "/" << year << endl
+        << endl;
+   int count = 0;
+   for (const auto &pair : sortedCustomers)
+   {
+      if (count++ >= 3)
+         break;
+      Buyer *buyer = nullptr;
+      for (auto &b : buyers)
+      {
+         if (b.getId() == pair.first)
+            buyer = &b;
+      }
+
+      if (buyer)
+      {
+         cout << count << ". " << buyer->getName()
+              << " (ID: " << pair.first << ") - Jumlah Transaksi: "
+              << pair.second << "\n";
+      }
+   }
+
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   cin.get();
+}
+
+// =======================================================
+// Menu Baru Khusus Seller
+// =======================================================
+void showManageStoreMenu()
+{
+   int choice = 0;
+   while (true)
+   {
+      clearScreen();
+      printHeader("Manajemen Toko: " + loggedInSeller->getStoreName());
+      displayGlobalMessage();
+
+      cout << "1. Daftarkan Item Baru\n";
+      cout << "2. Update Item (Stok/Harga/Buang)\n";
+      cout << "3. Lihat Semua Item Toko\n";
+      cout << "--- Analisis Toko ---\n";
+      cout << "4. Lihat Item Terpopuler\n"; // <-- BARU
+      cout << "5. Lihat Pelanggan Loyal\n"; // <-- BARU
+      cout << "6. Kembali\n";               // <-- Nomor disesuaikan
+      cout << "----------------------------------------\n";
+      cout << "Pilihan Anda: ";
+      cin >> choice;
+
+      if (cin.fail())
+      {
+         cin.clear();
+         globalMessage = "Input tidak valid.";
+         choice = 0;
+      }
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      switch (choice)
+      {
+      case 1:
+         handleRegisterNewItem();
+         break;
+      case 2:
+         handleUpdateExistingItem();
+         break;
+      case 3:
+         clearScreen();
+         printHeader("Daftar Item di " + loggedInSeller->getStoreName());
+         loggedInSeller->getStoreItems()->showAllItems();
+         cout << "\nTekan [Enter] untuk kembali...";
+         cin.get();
+         break;
+      case 4:
+         handleTopKItems();
+         break;
+      case 5:
+         handleLoyalCustomers();
+         break;
+      case 6:
+         return;
+      default:
+         if (choice != 0)
+            globalMessage = "Pilihan tidak valid.";
+         break;
+      }
    }
 }
 
@@ -245,8 +541,18 @@ void showLoggedInMenu()
 
       cout << "1. Cek Status Akun\n";
       cout << "2. Upgrade Akun ke Seller\n";
-      cout << "3. Logout\n";
-      cout << "4. Keluar dari Program\n";
+
+      int logoutOption = 3;
+      int exitOption = 4;
+      if (loggedInSeller)
+      {
+         cout << "3. Kelola Toko\n";
+         logoutOption = 4;
+         exitOption = 5;
+      }
+
+      cout << logoutOption << ". Logout\n";
+      cout << exitOption << ". Keluar dari Program\n";
       cout << "----------------------------------------\n";
       cout << "Pilihan Anda: ";
       cin >> choice;
@@ -254,29 +560,39 @@ void showLoggedInMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid. Harap masukkan angka.";
+         globalMessage = "Input tidak valid.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      switch (choice)
+      if (loggedInSeller && choice == 3)
       {
-      case 1:
-         handleCheckStatus();
-         break;
-      case 2:
-         handleUpgradeToSeller();
-         break;
-      case 3:
+         showManageStoreMenu();
+      }
+      else if (choice == logoutOption)
+      {
          handleLogout();
-         break;
-      case 4:
+      }
+      else if (choice == exitOption)
+      {
          cout << "Terima kasih!\n";
          exit(0);
-      default:
-         if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
-         break;
+      }
+      else
+      {
+         switch (choice)
+         {
+         case 1:
+            handleCheckStatus();
+            break;
+         case 2:
+            handleUpgradeToSeller();
+            break;
+         default:
+            if (choice != 0)
+               globalMessage = "Pilihan tidak valid.";
+            break;
+         }
       }
    }
 }

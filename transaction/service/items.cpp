@@ -4,6 +4,18 @@ void Items::addItem(const Item &item) { items.push_back(item); }
 
 vector<Item> &Items::getItems() { return items; }
 
+Item *Items::findItemById(unsigned int itemId)
+{
+   for (auto &item : items)
+   {
+      if (item.getId() == itemId)
+      {
+         return &item;
+      }
+   }
+   return nullptr;
+}
+
 void Items::showAllItems()
 {
    cout << "=== Items List ===" << endl;

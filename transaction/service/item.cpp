@@ -27,6 +27,11 @@ void Item::setName(const string &newName) { name = newName; }
 void Item::setPrice(double newPrice) { price = newPrice; }
 void Item::setQuantity(int newQuantity) { quantity = newQuantity; }
 
+void Item::increaseQuantity(int amount)
+{
+   quantity += amount;
+}
+
 void Item::decreaseQuantity(int amount)
 {
    if (quantity >= amount)

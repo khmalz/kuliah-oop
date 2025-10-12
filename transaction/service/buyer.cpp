@@ -1,40 +1,45 @@
 #include "../repo/buyer.h"
+#include "../repo/transaction.h"
+#include "../repo/seller.h"
+
 #include <stdexcept>
 #include <iostream>
 
-Buyer::Buyer(uint id, const std::string &name, const std::string &email, double initialDeposit)
+using namespace std;
+
+Buyer::Buyer(uint id, const string &name, const string &email, double initialDeposit)
     : id(id), name(name), email(email),
       customer(id, name, email, id + 1000, initialDeposit)
 {
 }
 
 uint Buyer::getId() const { return id; }
-std::string Buyer::getName() const { return name; }
-std::string Buyer::getEmail() const { return email; }
+string Buyer::getName() const { return name; }
+string Buyer::getEmail() const { return email; }
 
 BankCustomer *Buyer::getCustomer() { return &customer; }
 
-void Buyer::buyItem(Items &items, uint itemId, int qty)
+void Buyer::buyItem(Seller *seller, Items &items, unsigned int itemId, int qty, vector<Transaction> &log)
 {
-   for (auto &item : items.getItems())
+   Item *item = items.findItemById(itemId);
+   if (!item)
    {
-      if (item.getId() == itemId)
-      {
-         double totalPrice = item.getPrice() * qty;
-
-         if (customer.getBalance() < totalPrice)
-         {
-            throw std::runtime_error("Not enough balance");
-         }
-
-         customer.withdraw(totalPrice);
-         item.decreaseQuantity(qty);
-
-         std::cout << customer.getName() << " bought " << qty
-                   << " x " << item.getName()
-                   << " for " << totalPrice << std::endl;
-         return;
-      }
+      throw runtime_error("Item not found");
    }
-   throw std::runtime_error("Item not found");
+
+   double totalPrice = item->getPrice() * qty;
+   if (customer.getBalance() < totalPrice)
+   {
+      throw runtime_error("Not enough balance");
+   }
+
+   customer.withdraw(totalPrice);
+   seller->getCustomerAccount()->deposit(totalPrice);
+   item->decreaseQuantity(qty);
+
+   log.emplace_back(this->id, seller->getBuyer()->getId(), itemId, qty, totalPrice);
+
+   cout << customer.getName() << " bought " << qty
+        << " x " << item->getName()
+        << " for " << totalPrice << endl;
 }
