@@ -10,11 +10,12 @@
 #include "repo/seller.h"
 #include "repo/items.h"
 #include "repo/transaction.h"
+#include "utils.cpp"
 
 using namespace std;
 
 // =======================================================
-// "Database" & State Management Global
+// "Database"
 // =======================================================
 vector<Buyer> buyers;
 vector<Seller> sellers;
@@ -26,44 +27,6 @@ vector<Transaction> transactionLog;
 string globalMessage = "";
 uint nextItemId = 1;
 
-// =======================================================
-// Fungsi Utilitas Tampilan
-// =======================================================
-void clearScreen()
-{
-#if defined(__unix__) || defined(__APPLE__)
-   cout << "\033[2J\033[1;1H";
-#elif defined(_WIN32)
-   system("cls");
-#else
-   for (int i = 0; i < 50; ++i)
-      cout << endl;
-#endif
-}
-
-void printHeader(const string &title)
-{
-   cout << "========================================\n";
-   cout << "     " << title << "\n";
-   cout << "========================================\n\n";
-}
-
-string statusToString(OrderStatus status)
-{
-   switch (status)
-   {
-   case PAID:
-      return "Paid";
-   case COMPLETED:
-      return "Completed";
-   case CANCELED:
-      return "Canceled";
-   default:
-      return "Unknown";
-   }
-}
-
-// FUNGSI BARU: Untuk menampilkan dan menghapus pesan global
 void displayGlobalMessage()
 {
    if (!globalMessage.empty())
@@ -71,12 +34,13 @@ void displayGlobalMessage()
       cout << "----------------------------------------\n";
       cout << ">> " << globalMessage << "\n";
       cout << "----------------------------------------\n\n";
-      globalMessage = ""; // Hapus pesan setelah ditampilkan
+
+      globalMessage = "";
    }
 }
 
 // =======================================================
-// Handler untuk Aksi-Aksi Toko (BARU)
+// Handler untuk Toko
 // =======================================================
 
 void handleRegisterNewItem()
@@ -305,9 +269,6 @@ void handleLoyalCustomers()
    cin.get();
 }
 
-// =======================================================
-// Menu Baru Khusus Seller
-// =======================================================
 void showManageStoreMenu()
 {
    int choice = 0;
@@ -368,7 +329,7 @@ void showManageStoreMenu()
 }
 
 // =======================================================
-// Handler untuk Aksi-Aksi Buyer
+// Handler untuk Buyer
 // =======================================================
 
 void handlePurchaseItem()
@@ -494,7 +455,7 @@ void handleCheckSpending()
 }
 
 // =======================================================
-// Handler untuk Aksi-Aksi (sekarang menggunakan globalMessage)
+// Handler untuk Action
 // =======================================================
 
 void handleRegisterBuyer()
@@ -630,7 +591,7 @@ void handleCheckStatus()
 }
 
 // =======================================================
-// Fungsi untuk Menampilkan Menu-Menu
+// Hadnler untuk Menampilkan Menu-Menu
 // =======================================================
 
 void showBuyerMenu()
