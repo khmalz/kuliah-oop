@@ -19,7 +19,7 @@ string Buyer::getEmail() const { return email; }
 
 BankCustomer *Buyer::getCustomer() { return &customer; }
 
-void Buyer::buyItem(Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log)
+void Buyer::buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log)
 {
    Item *item = items.findItemById(itemId);
    if (!item)
@@ -43,6 +43,7 @@ void Buyer::buyItem(Seller *seller, Items &items, uint itemId, int qty, vector<T
    item->decreaseQuantity(qty);
 
    log.emplace_back(
+       transactionId,
        this->id,
        seller->getBuyer()->getId(),
        itemId,

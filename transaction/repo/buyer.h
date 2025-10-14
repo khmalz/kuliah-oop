@@ -26,7 +26,7 @@ public:
    string getEmail() const;
    BankCustomer *getCustomer();
 
-   void buyItem(Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);
+   void buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);
 };
 
 #endif

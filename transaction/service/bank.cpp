@@ -16,9 +16,9 @@ void Bank::addCustomer(const BankCustomer &customer)
    customers.push_back(customer);
 }
 
-BankCustomer *Bank::findCustomerById(uint id)
+BankCustomer *Bank::findCustomerById(uint id) const
 {
-   for (auto &c : customers)
+   for (auto &c : const_cast<vector<BankCustomer> &>(customers))
    {
       if (c.getId() == id)
          return &c;
@@ -37,7 +37,7 @@ void Bank::showAllCustomers()
    {
       cout << "Customer ID: " << c.getId()
            << ", Nama: " << c.getName()
-           << ", BankID: " << c.getBankAccountId()
+           << ", BankID: " << maskBankId(c.getBankAccountId())
            << ", Saldo: Rp " << c.getBalance()
            << endl;
    }
@@ -83,12 +83,23 @@ void Bank::listRecentTransactions(const vector<Transaction> &log) const
    {
       if (record.transactionDate >= one_week_ago)
       {
-         cout << "Toko   : " << record.sellerStoreName << "\n";
-         cout << "Item   : " << record.itemName << " (x" << record.quantity << ")\n";
-         cout << "Total  : Rp " << record.totalPrice << "\n";
-         cout << "Status : " << statusToString(record.status) << "\n";
-         cout << "----------------------------------------\n";
-         found = true;
+         BankCustomer *buyer = findCustomerById(record.buyerId);
+         BankCustomer *seller = findCustomerById(record.sellerId);
+
+         if (buyer && seller)
+         {
+            cout << "Pembeli: " << buyer->getName()
+                 << " (Bank ID: " << maskBankId(buyer->getBankAccountId()) << ")\n";
+
+            cout << "Penjual: " << seller->getName()
+                 << " (Toko: " << record.sellerStoreName
+                 << ", Bank ID: " << maskBankId(seller->getBankAccountId()) << ")\n";
+
+            cout << "Detail : " << record.itemName << " (x" << record.quantity << ") seharga Rp " << record.totalPrice << "\n";
+            cout << "Status : " << statusToString(record.status) << "\n";
+            cout << "----------------------------------------\n";
+            found = true;
+         }
       }
    }
 
@@ -137,7 +148,11 @@ void Bank::listDormantAccounts(const vector<Transaction> &log) const
 
       if (isDormant)
       {
-         cout << "ID: " << customer.getId() << ", Nama: " << customer.getName() << ", Email: " << customer.getEmail() << "\n";
+         cout << "ID: " << customer.getId()
+              << ", Nama: " << customer.getName()
+              << ", Email: " << customer.getEmail()
+              << ", BankID: " << maskBankId(customer.getBankAccountId())
+              << ", Status: Dormant" << "\n";
          found = true;
       }
    }

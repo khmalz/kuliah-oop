@@ -37,3 +37,13 @@ inline string statusToString(OrderStatus status)
       return "Unknown";
    }
 }
+
+inline string maskBankId(uint id)
+{
+   string idStr = to_string(id);
+   if (idStr.length() > 2)
+   {
+      return idStr.substr(0, 2) + string(idStr.length() - 2, 'x');
+   }
+   return idStr;
+}

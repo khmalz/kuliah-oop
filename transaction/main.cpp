@@ -14,6 +14,7 @@
 #include "utils.cpp"
 
 using namespace std;
+using namespace chrono;
 
 // =======================================================
 // "Database"
@@ -28,6 +29,7 @@ vector<Transaction> transactionLog;
 
 string globalMessage = "";
 uint nextItemId = 1;
+uint nextTransactionId = 1001;
 
 void displayGlobalMessage()
 {
@@ -142,9 +144,9 @@ void handleUpdateExistingItem()
    }
 }
 
-pair<int, int> getMonthYear(const chrono::system_clock::time_point &timepoint)
+pair<int, int> getMonthYear(const system_clock::time_point &timepoint)
 {
-   time_t time = chrono::system_clock::to_time_t(timepoint);
+   time_t time = system_clock::to_time_t(timepoint);
    tm *localTime = localtime(&time);
    return {localTime->tm_mon + 1, localTime->tm_year + 1900};
 }
@@ -388,8 +390,10 @@ void handlePurchaseItem()
 
    try
    {
-      loggedInBuyer->buyItem(targetSeller, *targetItems, itemId, quantity, transactionLog);
-      globalMessage = "Pembelian berhasil!";
+      uint newTransactionId = nextTransactionId++;
+      loggedInBuyer->buyItem(newTransactionId, targetSeller, *targetItems, itemId, quantity, transactionLog);
+
+      globalMessage = "Pembelian berhasil! ID Transaksi Anda: " + to_string(newTransactionId);
    }
    catch (const runtime_error &e)
    {
@@ -438,8 +442,8 @@ void handleCheckSpending()
    cin >> k_days;
 
    double totalSpending = 0;
-   auto now = chrono::system_clock::now();
-   auto k_days_ago = now - chrono::hours(24 * k_days);
+   auto now = system_clock::now();
+   auto k_days_ago = now - hours(24 * k_days);
 
    for (const auto &record : transactionLog)
    {
@@ -454,6 +458,137 @@ void handleCheckSpending()
    cout << "\nTekan [Enter] untuk kembali...";
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
    cin.get();
+}
+
+void handleConfirmReceipt()
+{
+   clearScreen();
+   printHeader("Konfirmasi Penerimaan Barang");
+
+   bool hasPaidOrders = false;
+   cout << "Pesanan Anda yang Menunggu Konfirmasi (Status PAID):\n";
+   cout << "--------------------------------------------------------\n";
+   for (const auto &record : transactionLog)
+   {
+      if (record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      {
+         cout << "ID Transaksi: " << record.transactionId << "\n";
+         cout << "Item        : " << record.itemName << " (x" << record.quantity << ")\n";
+         cout << "Dari Toko   : " << record.sellerStoreName << "\n\n";
+         hasPaidOrders = true;
+      }
+   }
+
+   if (!hasPaidOrders)
+   {
+      cout << "Anda tidak memiliki pesanan yang menunggu konfirmasi.\n";
+      cout << "\nTekan [Enter] untuk kembali...";
+      cin.get();
+      return;
+   }
+   cout << "--------------------------------------------------------\n";
+
+   uint idToConfirm;
+   cout << "Masukkan ID Transaksi yang ingin dikonfirmasi (atau 0 untuk batal): ";
+   cin >> idToConfirm;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   if (idToConfirm == 0)
+   {
+      globalMessage = "Aksi dibatalkan.";
+      return;
+   }
+
+   for (auto &record : transactionLog)
+   {
+      if (record.transactionId == idToConfirm && record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      {
+         record.status = COMPLETED;
+         globalMessage = "Terima kasih! Transaksi #" + to_string(idToConfirm) + " telah ditandai selesai.";
+         return;
+      }
+   }
+
+   globalMessage = "Error: ID Transaksi tidak ditemukan atau sudah dikonfirmasi.";
+}
+
+void handleCancelOrder()
+{
+   clearScreen();
+   printHeader("Batalkan Pesanan");
+
+   bool hasPaidOrders = false;
+   cout << "Pesanan Anda yang bisa dibatalkan (Status PAID):\n";
+   cout << "--------------------------------------------------------\n";
+   for (const auto &record : transactionLog)
+   {
+      if (record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      {
+         cout << "ID Transaksi: " << record.transactionId << "\n";
+         cout << "Item        : " << record.itemName << " (x" << record.quantity << ")\n";
+         cout << "Dari Toko   : " << record.sellerStoreName << "\n\n";
+         hasPaidOrders = true;
+      }
+   }
+
+   if (!hasPaidOrders)
+   {
+      cout << "Anda tidak memiliki pesanan yang bisa dibatalkan.\n";
+      cout << "\nTekan [Enter] untuk kembali...";
+      cin.get();
+      return;
+   }
+   cout << "--------------------------------------------------------\n";
+
+   uint idToCancel;
+   cout << "Masukkan ID Transaksi yang ingin dibatalkan (atau 0 untuk batal): ";
+   cin >> idToCancel;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   if (idToCancel == 0)
+   {
+      globalMessage = "Aksi dibatalkan.";
+      return;
+   }
+
+   for (auto &record : transactionLog)
+   {
+      if (record.transactionId == idToCancel && record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      {
+         Seller *sellerOfItem = nullptr;
+         for (auto &s : sellers)
+         {
+            if (s.getBuyer()->getId() == record.sellerId)
+            {
+               sellerOfItem = &s;
+               break;
+            }
+         }
+
+         if (sellerOfItem)
+         {
+            Item *itemToRestock = sellerOfItem->getStoreItems()->findItemById(record.itemId);
+            if (itemToRestock)
+            {
+               itemToRestock->increaseQuantity(record.quantity);
+            }
+         }
+
+         BankCustomer *buyerAccount = loggedInBuyer->getCustomer();
+         if (sellerOfItem)
+         {
+            BankCustomer *sellerAccount = sellerOfItem->getCustomerAccount();
+            sellerAccount->withdraw(record.totalPrice);
+            buyerAccount->deposit(record.totalPrice);
+         }
+
+         record.status = CANCELED;
+         globalMessage = "Transaksi #" + to_string(idToCancel) + " berhasil dibatalkan dan dana telah dikembalikan.";
+         return;
+      }
+   }
+
+   globalMessage = "Error: ID Transaksi tidak ditemukan atau statusnya bukan PAID.";
 }
 
 // =======================================================
@@ -702,7 +837,9 @@ void showBuyerMenu()
       cout << "1. Beli Barang\n";
       cout << "2. Lihat Riwayat Pesanan\n";
       cout << "3. Cek Pengeluaran Terakhir\n";
-      cout << "4. Kembali ke Menu Utama\n";
+      cout << "4. Konfirmasi Penerimaan Barang\n";
+      cout << "5. Batalkan Pesanan\n";
+      cout << "6. Kembali ke Menu Utama\n";
       cout << "----------------------------------------\n";
       cout << "Pilihan Anda: ";
       cin >> choice;
@@ -727,6 +864,12 @@ void showBuyerMenu()
          handleCheckSpending();
          break;
       case 4:
+         handleConfirmReceipt();
+         break;
+      case 5:
+         handleCancelOrder();
+         break;
+      case 6:
          return;
       default:
          if (choice != 0)
