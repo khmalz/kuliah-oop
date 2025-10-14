@@ -4,7 +4,6 @@
 #include <limits>
 #include <map>
 #include <algorithm>
-#include <ctime>
 
 #include "repo/bank.h"
 #include "repo/buyer.h"
@@ -151,13 +150,6 @@ void handleUpdateExistingItem()
       globalMessage = "Pilihan update tidak valid.";
       break;
    }
-}
-
-pair<int, int> getMonthYear(const system_clock::time_point &timepoint)
-{
-   time_t time = system_clock::to_time_t(timepoint);
-   tm *localTime = localtime(&time);
-   return {localTime->tm_mon + 1, localTime->tm_year + 1900};
 }
 
 void handleTopKItems()
