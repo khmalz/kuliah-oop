@@ -56,17 +56,20 @@ void handleRegisterNewItem()
    double price;
    int quantity;
 
-   cout << "Nama Item      : ";
+   cout << "Nama Item (ketik 0 untuk batal): ";
    getline(cin, name);
+   if (name == "0")
+   {
+      globalMessage = "Pendaftaran item baru dibatalkan.";
+      return;
+   }
    cout << "Harga per Item : Rp ";
    cin >> price;
    cout << "Jumlah Stok    : ";
    cin >> quantity;
 
-   // Ambil inventaris milik seller yang login
    Items *store = loggedInSeller->getStoreItems();
 
-   // Buat item baru dengan ID unik
    Item newItem(nextItemId++, name, price, quantity);
    store->addItem(newItem);
 
@@ -90,9 +93,15 @@ void handleUpdateExistingItem()
    cout << "----------------------------------------\n";
 
    uint itemId;
-   cout << "Masukkan ID item yang ingin diupdate: ";
+   cout << "Masukkan ID item yang ingin diupdate (ketik 0 untuk batal): ";
    cin >> itemId;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   if (itemId == 0)
+   {
+      globalMessage = "Update item dibatalkan.";
+      return;
+   }
 
    Item *itemToUpdate = store->findItemById(itemId);
    if (!itemToUpdate)
@@ -157,8 +166,14 @@ void handleTopKItems()
    printHeader("Item Terpopuler per Bulan");
 
    int month, year, k;
-   cout << "Masukkan Bulan (1-12): ";
+   cout << "Masukkan Bulan (1-12) (ketik 0 untuk batal): ";
    cin >> month;
+   if (month == 0)
+   {
+      globalMessage = "Pencarian item dibatalkan.";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      return;
+   }
    cout << "Masukkan Tahun (cth: 2025): ";
    cin >> year;
    cout << "Berapa item teratas (K): ";
@@ -216,8 +231,14 @@ void handleLoyalCustomers()
    printHeader("Pelanggan Loyal per Bulan");
 
    int month, year;
-   cout << "Masukkan Bulan (1-12): ";
+   cout << "Masukkan Bulan (1-12) (ketik 0 untuk batal): ";
    cin >> month;
+   if (month == 0)
+   {
+      globalMessage = "Pencarian pelanggan dibatalkan.";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      return;
+   }
    cout << "Masukkan Tahun (cth: 2025): ";
    cin >> year;
 
@@ -273,65 +294,6 @@ void handleLoyalCustomers()
    cin.get();
 }
 
-void showManageStoreMenu()
-{
-   int choice = 0;
-   while (true)
-   {
-      clearScreen();
-      printHeader("Manajemen Toko: " + loggedInSeller->getStoreName());
-      displayGlobalMessage();
-
-      cout << "1. Daftarkan Item Baru\n";
-      cout << "2. Update Item (Stok/Harga/Buang)\n";
-      cout << "3. Lihat Semua Item Toko\n";
-      cout << "--- Analisis Toko ---\n";
-      cout << "4. Lihat Item Terpopuler\n"; // <-- BARU
-      cout << "5. Lihat Pelanggan Loyal\n"; // <-- BARU
-      cout << "6. Kembali\n";               // <-- Nomor disesuaikan
-      cout << "----------------------------------------\n";
-      cout << "Pilihan Anda: ";
-      cin >> choice;
-
-      if (cin.fail())
-      {
-         cin.clear();
-         globalMessage = "Input tidak valid.";
-         choice = 0;
-      }
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-      switch (choice)
-      {
-      case 1:
-         handleRegisterNewItem();
-         break;
-      case 2:
-         handleUpdateExistingItem();
-         break;
-      case 3:
-         clearScreen();
-         printHeader("Daftar Item di " + loggedInSeller->getStoreName());
-         loggedInSeller->getStoreItems()->showAllItems();
-         cout << "\nTekan [Enter] untuk kembali...";
-         cin.get();
-         break;
-      case 4:
-         handleTopKItems();
-         break;
-      case 5:
-         handleLoyalCustomers();
-         break;
-      case 6:
-         return;
-      default:
-         if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
-         break;
-      }
-   }
-}
-
 // =======================================================
 // Handler untuk Buyer
 // =======================================================
@@ -363,8 +325,14 @@ void handlePurchaseItem()
    uint itemId;
    int quantity;
 
-   cout << "Masukkan ID Item yang ingin dibeli: ";
+   cout << "Masukkan ID Item yang ingin dibeli (ketik 0 untuk batal): ";
    cin >> itemId;
+   if (itemId == 0)
+   {
+      globalMessage = "Pembelian dibatalkan.";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      return;
+   }
    cout << "Masukkan Jumlah: ";
    cin >> quantity;
 
@@ -438,8 +406,14 @@ void handleCheckSpending()
 
    int k_days;
    cout << "Cek total pengeluaran dalam (k) hari terakhir.\n";
-   cout << "Masukkan jumlah hari (k): ";
+   cout << "Masukkan jumlah hari (k) (ketik 0 untuk batal): ";
    cin >> k_days;
+   if (k_days == 0)
+   {
+      globalMessage = "Pencarian dibatalkan.";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      return;
+   }
 
    double totalSpending = 0;
    auto now = system_clock::now();
@@ -489,7 +463,7 @@ void handleConfirmReceipt()
    cout << "--------------------------------------------------------\n";
 
    uint idToConfirm;
-   cout << "Masukkan ID Transaksi yang ingin dikonfirmasi (atau 0 untuk batal): ";
+   cout << "Masukkan ID Transaksi yang ingin dikonfirmasi (ketik 0 untuk batal): ";
    cin >> idToConfirm;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
@@ -541,7 +515,7 @@ void handleCancelOrder()
    cout << "--------------------------------------------------------\n";
 
    uint idToCancel;
-   cout << "Masukkan ID Transaksi yang ingin dibatalkan (atau 0 untuk batal): ";
+   cout << "Masukkan ID Transaksi yang ingin dibatalkan (ketik 0 untuk batal): ";
    cin >> idToCancel;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
@@ -603,8 +577,13 @@ void handleRegisterBuyer()
    string name, email;
    double initialDeposit = 0;
 
-   cout << "Masukkan Nama Lengkap  : ";
+   cout << "Masukkan Nama Lengkap  (ketik 0 untuk batal): ";
    getline(cin, name);
+   if (name == "0")
+   {
+      globalMessage = "Registrasi dibatalkan.";
+      return;
+   }
 
    cout << "Masukkan Email         : ";
    getline(cin, email);
@@ -645,8 +624,13 @@ void handleUpgradeToSeller()
    cout << "Data Buyer: " << loggedInBuyer->getName() << "\n";
    cout << "Silakan lengkapi informasi toko Anda.\n\n";
 
-   cout << "Nama Toko      : ";
+   cout << "Nama Toko (ketik 0 untuk batal): ";
    getline(cin, storeName);
+   if (storeName == "0")
+   {
+      globalMessage = "Registrasi dibatalkan.";
+      return;
+   }
 
    cout << "Alamat Toko    : ";
    getline(cin, storeAddress);
@@ -672,8 +656,15 @@ void handleLogin()
    printHeader("Login");
 
    uint id;
-   cout << "Masukkan ID Buyer Anda: ";
+   cout << "Masukkan ID Buyer Anda (ketik 0 untuk batal): ";
    cin >> id;
+
+   if (id == 0)
+   {
+      globalMessage = "Login dibatalkan.";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      return;
+   }
 
    for (auto &buyer : buyers)
    {
@@ -698,9 +689,38 @@ void handleLogin()
 
 void handleLogout()
 {
-   globalMessage = "Anda telah logout. Sampai jumpa, " + loggedInBuyer->getName() + "!";
-   loggedInBuyer = nullptr;
-   loggedInSeller = nullptr;
+   clearScreen();
+   printHeader("Logout");
+
+   char choice;
+   while (true)
+   {
+      cout << "Apakah Anda yakin ingin logout? (y/n): ";
+      cin >> choice;
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      choice = tolower(choice);
+
+      if (choice == 'y')
+      {
+         string name = loggedInBuyer->getName();
+
+         loggedInBuyer = nullptr;
+         loggedInSeller = nullptr;
+
+         globalMessage = "Anda telah logout. Sampai jumpa, " + name + "!";
+         return;
+      }
+      else if (choice == 'n')
+      {
+         globalMessage = "Logout dibatalkan.";
+         return;
+      }
+      else
+      {
+         cout << "Input tidak valid. Harap masukkan 'y' atau 'n'.\n";
+      }
+   }
 }
 
 void handleCheckStatus()
@@ -762,9 +782,15 @@ void handleListTopUsers()
    clearScreen();
    printHeader("Top Pengguna Aktif Hari Ini");
    int n;
-   cout << "Berapa pengguna teratas yang ingin ditampilkan? ";
+   cout << "Berapa pengguna teratas yang ingin ditampilkan? (ketik 0 untuk batal): ";
    cin >> n;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   if (n == 0)
+   {
+      globalMessage = "Operasi dibatalkan.";
+      return;
+   }
 
    mainBank.listTopUsersToday(transactionLog, n);
    cout << "\nTekan [Enter] untuk kembali...";
@@ -868,6 +894,65 @@ void showBuyerMenu()
          break;
       case 5:
          handleCancelOrder();
+         break;
+      case 6:
+         return;
+      default:
+         if (choice != 0)
+            globalMessage = "Pilihan tidak valid.";
+         break;
+      }
+   }
+}
+
+void showManageStoreMenu()
+{
+   int choice = 0;
+   while (true)
+   {
+      clearScreen();
+      printHeader("Manajemen Toko: " + loggedInSeller->getStoreName());
+      displayGlobalMessage();
+
+      cout << "1. Daftarkan Item Baru\n";
+      cout << "2. Update Item (Stok/Harga/Buang)\n";
+      cout << "3. Lihat Semua Item Toko\n";
+      cout << "--- Analisis Toko ---\n";
+      cout << "4. Lihat Item Terpopuler\n";
+      cout << "5. Lihat Pelanggan Loyal\n";
+      cout << "6. Kembali\n";
+      cout << "----------------------------------------\n";
+      cout << "Pilihan Anda: ";
+      cin >> choice;
+
+      if (cin.fail())
+      {
+         cin.clear();
+         globalMessage = "Input tidak valid.";
+         choice = 0;
+      }
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      switch (choice)
+      {
+      case 1:
+         handleRegisterNewItem();
+         break;
+      case 2:
+         handleUpdateExistingItem();
+         break;
+      case 3:
+         clearScreen();
+         printHeader("Daftar Item di " + loggedInSeller->getStoreName());
+         loggedInSeller->getStoreItems()->showAllItems();
+         cout << "\nTekan [Enter] untuk kembali...";
+         cin.get();
+         break;
+      case 4:
+         handleTopKItems();
+         break;
+      case 5:
+         handleLoyalCustomers();
          break;
       case 6:
          return;
