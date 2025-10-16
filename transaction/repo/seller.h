@@ -8,6 +8,7 @@ using namespace std;
 
 class Buyer;
 class BankCustomer;
+struct Transaction;
 
 class Seller
 {
@@ -25,6 +26,11 @@ public:
    string getStoreName() const;
    BankCustomer *getCustomerAccount() const;
    Items *getStoreItems();
+
+   void registerNewItem();
+   void updateExistingItem();
+   void showTopKItems(const vector<Transaction> &allTransactions) const;
+   void showLoyalCustomers(const vector<Transaction> &allTransactions) const;
 };
 
 #endif

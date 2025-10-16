@@ -18,249 +18,6 @@ using namespace std;
 using namespace chrono;
 
 // =======================================================
-// Handler untuk Toko
-// =======================================================
-
-void handleRegisterNewItem()
-{
-   clearScreen();
-   printHeader("Daftarkan Item Baru");
-
-   string name;
-   double price;
-   int quantity;
-
-   cout << "Nama Item (ketik 0 untuk batal): ";
-   getline(cin, name);
-   if (name == "0")
-   {
-      Database::globalMessage = "Pendaftaran item baru dibatalkan.";
-      return;
-   }
-   cout << "Harga per Item : Rp ";
-   cin >> price;
-   cout << "Jumlah Stok    : ";
-   cin >> quantity;
-
-   Items *store = Database::loggedInSeller->getStoreItems();
-
-   Item newItem(Database::nextItemId++, name, price, quantity);
-   store->addItem(newItem);
-
-   Database::globalMessage = "Item '" + name + "' berhasil didaftarkan!";
-}
-
-void handleUpdateExistingItem()
-{
-   clearScreen();
-   printHeader("Update Item");
-
-   Items *store = Database::loggedInSeller->getStoreItems();
-   if (store->getItems().empty())
-   {
-      Database::globalMessage = "Anda belum memiliki item untuk diupdate.";
-      return;
-   }
-
-   cout << "Item yang Anda miliki:\n";
-   store->showAllItems();
-   cout << "----------------------------------------\n";
-
-   uint itemId;
-   cout << "Masukkan ID item yang ingin diupdate (ketik 0 untuk batal): ";
-   cin >> itemId;
-   cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-   if (itemId == 0)
-   {
-      Database::globalMessage = "Update item dibatalkan.";
-      return;
-   }
-
-   Item *itemToUpdate = store->findItemById(itemId);
-   if (!itemToUpdate)
-   {
-      Database::globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan.";
-      return;
-   }
-
-   clearScreen();
-   printHeader("Mengupdate: " + itemToUpdate->getName());
-   cout << "1. Tambah Stok (Replenish)\n";
-   cout << "2. Ubah Harga\n";
-   cout << "3. Buang Item (Discard)\n";
-   cout << "Pilihan Anda: ";
-   int choice;
-   cin >> choice;
-   cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-   switch (choice)
-   {
-   case 1:
-   {
-      int amount;
-      cout << "Jumlah stok yang ingin ditambahkan: ";
-      cin >> amount;
-      itemToUpdate->increaseQuantity(amount);
-      Database::globalMessage = "Stok berhasil ditambahkan.";
-      break;
-   }
-   case 2:
-   {
-      double newPrice;
-      cout << "Harga baru: Rp ";
-      cin >> newPrice;
-      itemToUpdate->setPrice(newPrice);
-      Database::globalMessage = "Harga berhasil diubah.";
-      break;
-   }
-   case 3:
-   {
-      store->removeItem(itemId);
-      Database::globalMessage = "Item berhasil dibuang.";
-      break;
-   }
-   default:
-      Database::globalMessage = "Pilihan update tidak valid.";
-      break;
-   }
-}
-
-void handleTopKItems()
-{
-   clearScreen();
-   printHeader("Item Terpopuler per Bulan");
-
-   int month, year, k;
-   cout << "Masukkan Bulan (1-12) (ketik 0 untuk batal): ";
-   cin >> month;
-   if (month == 0)
-   {
-      Database::globalMessage = "Pencarian item dibatalkan.";
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-      return;
-   }
-   cout << "Masukkan Tahun (cth: 2025): ";
-   cin >> year;
-   cout << "Berapa item teratas (K): ";
-   cin >> k;
-
-   map<uint, int> itemPopularity;
-   for (const auto &record : Database::transactionLog)
-   {
-      if (record.sellerId == Database::loggedInSeller->getBuyer()->getId())
-      {
-         pair<int, int> recordDate = getMonthYear(record.transactionDate);
-         if (recordDate.first == month && recordDate.second == year)
-         {
-            itemPopularity[record.itemId] += record.quantity;
-         }
-      }
-   }
-
-   if (itemPopularity.empty())
-   {
-      Database::globalMessage = "Tidak ada data penjualan untuk periode tersebut.";
-      return;
-   }
-
-   vector<pair<uint, int>> sortedItems(itemPopularity.begin(), itemPopularity.end());
-   sort(sortedItems.begin(), sortedItems.end(), [](const auto &a, const auto &b)
-        { return a.second > b.second; });
-
-   clearScreen();
-   printHeader("Top " + to_string(k) + " Item Populer");
-   cout << "Periode: " << month << "/" << year << endl
-        << endl;
-   int count = 0;
-   for (const auto &pair : sortedItems)
-   {
-      if (count++ >= k)
-         break;
-      Item *item = Database::loggedInSeller->getStoreItems()->findItemById(pair.first);
-      if (item)
-      {
-         cout << count << ". " << item->getName()
-              << " (ID: " << pair.first << ") - Terjual: "
-              << pair.second << " unit\n";
-      }
-   }
-
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.ignore(numeric_limits<streamsize>::max(), '\n');
-   cin.get();
-}
-
-void handleLoyalCustomers()
-{
-   clearScreen();
-   printHeader("Pelanggan Loyal per Bulan");
-
-   int month, year;
-   cout << "Masukkan Bulan (1-12) (ketik 0 untuk batal): ";
-   cin >> month;
-   if (month == 0)
-   {
-      Database::globalMessage = "Pencarian pelanggan dibatalkan.";
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-      return;
-   }
-   cout << "Masukkan Tahun (cth: 2025): ";
-   cin >> year;
-
-   map<uint, int> customerFrequency;
-   for (const auto &record : Database::transactionLog)
-   {
-      if (record.sellerId == Database::loggedInSeller->getBuyer()->getId())
-      {
-         pair<int, int> recordDate = getMonthYear(record.transactionDate);
-         if (recordDate.first == month && recordDate.second == year)
-         {
-            customerFrequency[record.buyerId]++;
-         }
-      }
-   }
-
-   if (customerFrequency.empty())
-   {
-      Database::globalMessage = "Tidak ada data pelanggan untuk periode tersebut.";
-      return;
-   }
-
-   vector<pair<uint, int>> sortedCustomers(customerFrequency.begin(), customerFrequency.end());
-   sort(sortedCustomers.begin(), sortedCustomers.end(), [](const auto &a, const auto &b)
-        { return a.second > b.second; });
-
-   clearScreen();
-   printHeader("Top 3 Pelanggan Loyal");
-   cout << "Periode: " << month << "/" << year << endl
-        << endl;
-   int count = 0;
-   for (const auto &pair : sortedCustomers)
-   {
-      if (count++ >= 3)
-         break;
-      Buyer *buyer = nullptr;
-      for (auto &b : Database::buyers)
-      {
-         if (b.getId() == pair.first)
-            buyer = &b;
-      }
-
-      if (buyer)
-      {
-         cout << count << ". " << buyer->getName()
-              << " (ID: " << pair.first << ") - Jumlah Transaksi: "
-              << pair.second << "\n";
-      }
-   }
-
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.ignore(numeric_limits<streamsize>::max(), '\n');
-   cin.get();
-}
-
-// =======================================================
 // Handler untuk Buyer
 // =======================================================
 
@@ -877,6 +634,7 @@ void showManageStoreMenu()
    while (true)
    {
       clearScreen();
+
       printHeader("Manajemen Toko: " + Database::loggedInSeller->getStoreName());
       Database::displayGlobalMessage();
 
@@ -899,33 +657,43 @@ void showManageStoreMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      switch (choice)
+      if (choice == 6)
       {
-      case 1:
-         handleRegisterNewItem();
-         break;
-      case 2:
-         handleUpdateExistingItem();
-         break;
-      case 3:
-         clearScreen();
-         printHeader("Daftar Item di " + Database::loggedInSeller->getStoreName());
-         Database::loggedInSeller->getStoreItems()->showAllItems();
-         cout << "\nTekan [Enter] untuk kembali...";
-         cin.get();
-         break;
-      case 4:
-         handleTopKItems();
-         break;
-      case 5:
-         handleLoyalCustomers();
-         break;
-      case 6:
          return;
-      default:
+      }
+
+      if (choice >= 1 && choice <= 5)
+      {
+         clearScreen();
+
+         switch (choice)
+         {
+         case 1:
+            Database::loggedInSeller->registerNewItem();
+            break;
+         case 2:
+            Database::loggedInSeller->updateExistingItem();
+            break;
+         case 3:
+            printHeader("Daftar Item di " + Database::loggedInSeller->getStoreName());
+            Database::loggedInSeller->getStoreItems()->showAllItems();
+            cout << "\nTekan [Enter] untuk kembali...";
+            cin.get();
+            break;
+         case 4:
+            Database::loggedInSeller->showTopKItems(Database::transactionLog);
+            break;
+         case 5:
+            Database::loggedInSeller->showLoyalCustomers(Database::transactionLog);
+            break;
+         }
+      }
+      else
+      {
          if (choice != 0)
+         {
             Database::globalMessage = "Pilihan tidak valid.";
-         break;
+         }
       }
    }
 }
