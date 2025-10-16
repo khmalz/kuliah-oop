@@ -4,6 +4,7 @@
 #include <limits>
 #include <map>
 #include <algorithm>
+#include <cctype>
 
 #include "repo/bank.h"
 #include "repo/buyer.h"
@@ -11,36 +12,10 @@
 #include "repo/items.h"
 #include "repo/transaction.h"
 #include "utils.cpp"
+#include "database.cpp"
 
 using namespace std;
 using namespace chrono;
-
-// =======================================================
-// "Database"
-// =======================================================
-vector<Buyer> buyers;
-vector<Seller> sellers;
-Bank mainBank;
-
-Buyer *loggedInBuyer = nullptr;
-Seller *loggedInSeller = nullptr;
-vector<Transaction> transactionLog;
-
-string globalMessage = "";
-uint nextItemId = 1;
-uint nextTransactionId = 1001;
-
-void displayGlobalMessage()
-{
-   if (!globalMessage.empty())
-   {
-      cout << "----------------------------------------\n";
-      cout << ">> " << globalMessage << "\n";
-      cout << "----------------------------------------\n\n";
-
-      globalMessage = "";
-   }
-}
 
 // =======================================================
 // Handler untuk Toko
@@ -59,7 +34,7 @@ void handleRegisterNewItem()
    getline(cin, name);
    if (name == "0")
    {
-      globalMessage = "Pendaftaran item baru dibatalkan.";
+      Database::globalMessage = "Pendaftaran item baru dibatalkan.";
       return;
    }
    cout << "Harga per Item : Rp ";
@@ -67,12 +42,12 @@ void handleRegisterNewItem()
    cout << "Jumlah Stok    : ";
    cin >> quantity;
 
-   Items *store = loggedInSeller->getStoreItems();
+   Items *store = Database::loggedInSeller->getStoreItems();
 
-   Item newItem(nextItemId++, name, price, quantity);
+   Item newItem(Database::nextItemId++, name, price, quantity);
    store->addItem(newItem);
 
-   globalMessage = "Item '" + name + "' berhasil didaftarkan!";
+   Database::globalMessage = "Item '" + name + "' berhasil didaftarkan!";
 }
 
 void handleUpdateExistingItem()
@@ -80,10 +55,10 @@ void handleUpdateExistingItem()
    clearScreen();
    printHeader("Update Item");
 
-   Items *store = loggedInSeller->getStoreItems();
+   Items *store = Database::loggedInSeller->getStoreItems();
    if (store->getItems().empty())
    {
-      globalMessage = "Anda belum memiliki item untuk diupdate.";
+      Database::globalMessage = "Anda belum memiliki item untuk diupdate.";
       return;
    }
 
@@ -98,18 +73,17 @@ void handleUpdateExistingItem()
 
    if (itemId == 0)
    {
-      globalMessage = "Update item dibatalkan.";
+      Database::globalMessage = "Update item dibatalkan.";
       return;
    }
 
    Item *itemToUpdate = store->findItemById(itemId);
    if (!itemToUpdate)
    {
-      globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan.";
+      Database::globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan.";
       return;
    }
 
-   // Sub-menu untuk update
    clearScreen();
    printHeader("Mengupdate: " + itemToUpdate->getName());
    cout << "1. Tambah Stok (Replenish)\n";
@@ -128,7 +102,7 @@ void handleUpdateExistingItem()
       cout << "Jumlah stok yang ingin ditambahkan: ";
       cin >> amount;
       itemToUpdate->increaseQuantity(amount);
-      globalMessage = "Stok berhasil ditambahkan.";
+      Database::globalMessage = "Stok berhasil ditambahkan.";
       break;
    }
    case 2:
@@ -137,17 +111,17 @@ void handleUpdateExistingItem()
       cout << "Harga baru: Rp ";
       cin >> newPrice;
       itemToUpdate->setPrice(newPrice);
-      globalMessage = "Harga berhasil diubah.";
+      Database::globalMessage = "Harga berhasil diubah.";
       break;
    }
    case 3:
    {
       store->removeItem(itemId);
-      globalMessage = "Item berhasil dibuang.";
+      Database::globalMessage = "Item berhasil dibuang.";
       break;
    }
    default:
-      globalMessage = "Pilihan update tidak valid.";
+      Database::globalMessage = "Pilihan update tidak valid.";
       break;
    }
 }
@@ -162,7 +136,7 @@ void handleTopKItems()
    cin >> month;
    if (month == 0)
    {
-      globalMessage = "Pencarian item dibatalkan.";
+      Database::globalMessage = "Pencarian item dibatalkan.";
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
       return;
    }
@@ -172,9 +146,9 @@ void handleTopKItems()
    cin >> k;
 
    map<uint, int> itemPopularity;
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.sellerId == loggedInSeller->getBuyer()->getId())
+      if (record.sellerId == Database::loggedInSeller->getBuyer()->getId())
       {
          pair<int, int> recordDate = getMonthYear(record.transactionDate);
          if (recordDate.first == month && recordDate.second == year)
@@ -186,7 +160,7 @@ void handleTopKItems()
 
    if (itemPopularity.empty())
    {
-      globalMessage = "Tidak ada data penjualan untuk periode tersebut.";
+      Database::globalMessage = "Tidak ada data penjualan untuk periode tersebut.";
       return;
    }
 
@@ -203,7 +177,7 @@ void handleTopKItems()
    {
       if (count++ >= k)
          break;
-      Item *item = loggedInSeller->getStoreItems()->findItemById(pair.first);
+      Item *item = Database::loggedInSeller->getStoreItems()->findItemById(pair.first);
       if (item)
       {
          cout << count << ". " << item->getName()
@@ -227,7 +201,7 @@ void handleLoyalCustomers()
    cin >> month;
    if (month == 0)
    {
-      globalMessage = "Pencarian pelanggan dibatalkan.";
+      Database::globalMessage = "Pencarian pelanggan dibatalkan.";
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
       return;
    }
@@ -235,9 +209,9 @@ void handleLoyalCustomers()
    cin >> year;
 
    map<uint, int> customerFrequency;
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.sellerId == loggedInSeller->getBuyer()->getId())
+      if (record.sellerId == Database::loggedInSeller->getBuyer()->getId())
       {
          pair<int, int> recordDate = getMonthYear(record.transactionDate);
          if (recordDate.first == month && recordDate.second == year)
@@ -249,7 +223,7 @@ void handleLoyalCustomers()
 
    if (customerFrequency.empty())
    {
-      globalMessage = "Tidak ada data pelanggan untuk periode tersebut.";
+      Database::globalMessage = "Tidak ada data pelanggan untuk periode tersebut.";
       return;
    }
 
@@ -267,7 +241,7 @@ void handleLoyalCustomers()
       if (count++ >= 3)
          break;
       Buyer *buyer = nullptr;
-      for (auto &b : buyers)
+      for (auto &b : Database::buyers)
       {
          if (b.getId() == pair.first)
             buyer = &b;
@@ -295,15 +269,15 @@ void handlePurchaseItem()
    clearScreen();
    printHeader("Beli Barang");
 
-   if (sellers.empty())
+   if (Database::sellers.empty())
    {
-      globalMessage = "Maaf, belum ada toko yang buka saat ini.";
+      Database::globalMessage = "Maaf, belum ada toko yang buka saat ini.";
       return;
    }
 
    cout << "Daftar Barang yang Tersedia:\n";
    cout << "--------------------------------------------------------\n";
-   for (auto &seller : sellers)
+   for (auto &seller : Database::sellers)
    {
       if (!seller.getStoreItems()->getItems().empty())
       {
@@ -321,7 +295,7 @@ void handlePurchaseItem()
    cin >> itemId;
    if (itemId == 0)
    {
-      globalMessage = "Pembelian dibatalkan.";
+      Database::globalMessage = "Pembelian dibatalkan.";
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
       return;
    }
@@ -331,7 +305,7 @@ void handlePurchaseItem()
    Seller *targetSeller = nullptr;
    Items *targetItems = nullptr;
 
-   for (auto &seller : sellers)
+   for (auto &seller : Database::sellers)
    {
       Item *item = seller.getStoreItems()->findItemById(itemId);
       if (item)
@@ -344,20 +318,20 @@ void handlePurchaseItem()
 
    if (!targetSeller)
    {
-      globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan di toko mana pun.";
+      Database::globalMessage = "Item dengan ID " + to_string(itemId) + " tidak ditemukan di toko mana pun.";
       return;
    }
 
    try
    {
-      uint newTransactionId = nextTransactionId++;
-      loggedInBuyer->buyItem(newTransactionId, targetSeller, *targetItems, itemId, quantity, transactionLog);
+      uint newTransactionId = Database::nextTransactionId++;
+      Database::loggedInBuyer->buyItem(newTransactionId, targetSeller, *targetItems, itemId, quantity, Database::transactionLog);
 
-      globalMessage = "Pembelian berhasil! ID Transaksi Anda: " + to_string(newTransactionId);
+      Database::globalMessage = "Pembelian berhasil! ID Transaksi Anda: " + to_string(newTransactionId);
    }
    catch (const runtime_error &e)
    {
-      globalMessage = "Error: " + string(e.what());
+      Database::globalMessage = "Error: " + string(e.what());
    }
 }
 
@@ -369,9 +343,9 @@ void handleListOrders()
    cout << "Menampilkan semua pesanan Anda:\n\n";
 
    bool hasOrders = false;
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.buyerId == loggedInBuyer->getId())
+      if (record.buyerId == Database::loggedInBuyer->getId())
       {
          cout << "Toko     : " << record.sellerStoreName << "\n";
          cout << "Item     : " << record.itemName << " (x" << record.quantity << ")\n";
@@ -402,7 +376,7 @@ void handleCheckSpending()
    cin >> k_days;
    if (k_days == 0)
    {
-      globalMessage = "Pencarian dibatalkan.";
+      Database::globalMessage = "Pencarian dibatalkan.";
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
       return;
    }
@@ -411,9 +385,9 @@ void handleCheckSpending()
    auto now = system_clock::now();
    auto k_days_ago = now - hours(24 * k_days);
 
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.buyerId == loggedInBuyer->getId() && record.transactionDate >= k_days_ago)
+      if (record.buyerId == Database::loggedInBuyer->getId() && record.transactionDate >= k_days_ago)
       {
          totalSpending += record.totalPrice;
       }
@@ -434,9 +408,9 @@ void handleConfirmReceipt()
    bool hasPaidOrders = false;
    cout << "Pesanan Anda yang Menunggu Konfirmasi (Status PAID):\n";
    cout << "--------------------------------------------------------\n";
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      if (record.buyerId == Database::loggedInBuyer->getId() && record.status == PAID)
       {
          cout << "ID Transaksi: " << record.transactionId << "\n";
          cout << "Item        : " << record.itemName << " (x" << record.quantity << ")\n";
@@ -461,21 +435,21 @@ void handleConfirmReceipt()
 
    if (idToConfirm == 0)
    {
-      globalMessage = "Aksi dibatalkan.";
+      Database::globalMessage = "Aksi dibatalkan.";
       return;
    }
 
-   for (auto &record : transactionLog)
+   for (auto &record : Database::transactionLog)
    {
-      if (record.transactionId == idToConfirm && record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      if (record.transactionId == idToConfirm && record.buyerId == Database::loggedInBuyer->getId() && record.status == PAID)
       {
          record.status = COMPLETED;
-         globalMessage = "Terima kasih! Transaksi #" + to_string(idToConfirm) + " telah ditandai selesai.";
+         Database::globalMessage = "Terima kasih! Transaksi #" + to_string(idToConfirm) + " telah ditandai selesai.";
          return;
       }
    }
 
-   globalMessage = "Error: ID Transaksi tidak ditemukan atau sudah dikonfirmasi.";
+   Database::globalMessage = "Error: ID Transaksi tidak ditemukan atau sudah dikonfirmasi.";
 }
 
 void handleCancelOrder()
@@ -486,9 +460,9 @@ void handleCancelOrder()
    bool hasPaidOrders = false;
    cout << "Pesanan Anda yang bisa dibatalkan (Status PAID):\n";
    cout << "--------------------------------------------------------\n";
-   for (const auto &record : transactionLog)
+   for (const auto &record : Database::transactionLog)
    {
-      if (record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      if (record.buyerId == Database::loggedInBuyer->getId() && record.status == PAID)
       {
          cout << "ID Transaksi: " << record.transactionId << "\n";
          cout << "Item        : " << record.itemName << " (x" << record.quantity << ")\n";
@@ -513,16 +487,16 @@ void handleCancelOrder()
 
    if (idToCancel == 0)
    {
-      globalMessage = "Aksi dibatalkan.";
+      Database::globalMessage = "Aksi dibatalkan.";
       return;
    }
 
-   for (auto &record : transactionLog)
+   for (auto &record : Database::transactionLog)
    {
-      if (record.transactionId == idToCancel && record.buyerId == loggedInBuyer->getId() && record.status == PAID)
+      if (record.transactionId == idToCancel && record.buyerId == Database::loggedInBuyer->getId() && record.status == PAID)
       {
          Seller *sellerOfItem = nullptr;
-         for (auto &s : sellers)
+         for (auto &s : Database::sellers)
          {
             if (s.getBuyer()->getId() == record.sellerId)
             {
@@ -540,7 +514,7 @@ void handleCancelOrder()
             }
          }
 
-         BankCustomer *buyerAccount = loggedInBuyer->getCustomer();
+         BankCustomer *buyerAccount = Database::loggedInBuyer->getCustomer();
          if (sellerOfItem)
          {
             BankCustomer *sellerAccount = sellerOfItem->getCustomerAccount();
@@ -549,12 +523,12 @@ void handleCancelOrder()
          }
 
          record.status = CANCELED;
-         globalMessage = "Transaksi #" + to_string(idToCancel) + " berhasil dibatalkan dan dana telah dikembalikan.";
+         Database::globalMessage = "Transaksi #" + to_string(idToCancel) + " berhasil dibatalkan dan dana telah dikembalikan.";
          return;
       }
    }
 
-   globalMessage = "Error: ID Transaksi tidak ditemukan atau statusnya bukan PAID.";
+   Database::globalMessage = "Error: ID Transaksi tidak ditemukan atau statusnya bukan PAID.";
 }
 
 // =======================================================
@@ -573,7 +547,7 @@ void handleRegisterBuyer()
    getline(cin, name);
    if (name == "0")
    {
-      globalMessage = "Registrasi dibatalkan.";
+      Database::globalMessage = "Registrasi dibatalkan.";
       return;
    }
 
@@ -588,24 +562,24 @@ void handleRegisterBuyer()
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
    }
 
-   uint newId = buyers.size() + 1;
-   buyers.emplace_back(newId, name, email, initialDeposit);
+   uint newId = Database::buyers.size() + 1;
+   Database::buyers.emplace_back(newId, name, email, initialDeposit);
 
-   mainBank.addCustomer(*(buyers.back().getCustomer()));
+   Database::mainBank.addCustomer(*(Database::buyers.back().getCustomer()));
 
-   globalMessage = "Registrasi berhasil! ID Buyer Anda adalah " + to_string(newId);
+   Database::globalMessage = "Registrasi berhasil! ID Buyer Anda adalah " + to_string(newId);
 }
 
 void handleUpgradeToSeller()
 {
-   if (!loggedInBuyer)
+   if (!Database::loggedInBuyer)
    {
-      globalMessage = "Error: Tidak ada user yang login.";
+      Database::globalMessage = "Error: Tidak ada user yang login.";
       return;
    }
-   if (loggedInSeller)
+   if (Database::loggedInSeller)
    {
-      globalMessage = "Akun Anda sudah menjadi Seller!";
+      Database::globalMessage = "Akun Anda sudah menjadi Seller!";
       return;
    }
 
@@ -613,14 +587,14 @@ void handleUpgradeToSeller()
    printHeader("Upgrade Akun ke Seller");
 
    string storeName, storeAddress, storeEmail;
-   cout << "Data Buyer: " << loggedInBuyer->getName() << "\n";
+   cout << "Data Buyer: " << Database::loggedInBuyer->getName() << "\n";
    cout << "Silakan lengkapi informasi toko Anda.\n\n";
 
    cout << "Nama Toko (ketik 0 untuk batal): ";
    getline(cin, storeName);
    if (storeName == "0")
    {
-      globalMessage = "Registrasi dibatalkan.";
+      Database::globalMessage = "Registrasi dibatalkan.";
       return;
    }
 
@@ -630,17 +604,17 @@ void handleUpgradeToSeller()
    cout << "Email Toko     : ";
    getline(cin, storeEmail);
 
-   sellers.emplace_back(loggedInBuyer, storeName, storeAddress, storeEmail);
-   loggedInSeller = &sellers.back();
+   Database::sellers.emplace_back(Database::loggedInBuyer, storeName, storeAddress, storeEmail);
+   Database::loggedInSeller = &Database::sellers.back();
 
-   globalMessage = "Upgrade berhasil! Anda sekarang adalah Seller.";
+   Database::globalMessage = "Upgrade berhasil! Anda sekarang adalah Seller.";
 }
 
 void handleLogin()
 {
-   if (buyers.empty())
+   if (Database::buyers.empty())
    {
-      globalMessage = "Belum ada buyer terdaftar. Silakan registrasi dahulu.";
+      Database::globalMessage = "Belum ada buyer terdaftar. Silakan registrasi dahulu.";
       return;
    }
 
@@ -653,30 +627,30 @@ void handleLogin()
 
    if (id == 0)
    {
-      globalMessage = "Login dibatalkan.";
+      Database::globalMessage = "Login dibatalkan.";
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
       return;
    }
 
-   for (auto &buyer : buyers)
+   for (auto &buyer : Database::buyers)
    {
       if (buyer.getId() == id)
       {
-         loggedInBuyer = &buyer;
-         loggedInSeller = nullptr;
-         for (auto &seller : sellers)
+         Database::loggedInBuyer = &buyer;
+         Database::loggedInSeller = nullptr;
+         for (auto &seller : Database::sellers)
          {
             if (seller.getBuyer()->getId() == id)
             {
-               loggedInSeller = &seller;
+               Database::loggedInSeller = &seller;
                break;
             }
          }
-         globalMessage = "Login berhasil! Selamat datang, " + loggedInBuyer->getName() + ".";
+         Database::globalMessage = "Login berhasil! Selamat datang, " + Database::loggedInBuyer->getName() + ".";
          return;
       }
    }
-   globalMessage = "Login gagal. ID Buyer tidak ditemukan.";
+   Database::globalMessage = "Login gagal. ID Buyer tidak ditemukan.";
 }
 
 void handleLogout()
@@ -695,17 +669,17 @@ void handleLogout()
 
       if (choice == 'y')
       {
-         string name = loggedInBuyer->getName();
+         string name = Database::loggedInBuyer->getName();
 
-         loggedInBuyer = nullptr;
-         loggedInSeller = nullptr;
+         Database::loggedInBuyer = nullptr;
+         Database::loggedInSeller = nullptr;
 
-         globalMessage = "Anda telah logout. Sampai jumpa, " + name + "!";
+         Database::globalMessage = "Anda telah logout. Sampai jumpa, " + name + "!";
          return;
       }
       else if (choice == 'n')
       {
-         globalMessage = "Logout dibatalkan.";
+         Database::globalMessage = "Logout dibatalkan.";
          return;
       }
       else
@@ -719,17 +693,17 @@ void handleCheckStatus()
 {
    clearScreen();
    printHeader("Status Akun");
-   BankCustomer *customer = loggedInBuyer->getCustomer();
+   BankCustomer *customer = Database::loggedInBuyer->getCustomer();
 
-   cout << "ID       : " << loggedInBuyer->getId() << "\n";
-   cout << "Nama     : " << loggedInBuyer->getName() << "\n";
-   cout << "Email    : " << loggedInBuyer->getEmail() << "\n";
+   cout << "ID       : " << Database::loggedInBuyer->getId() << "\n";
+   cout << "Nama     : " << Database::loggedInBuyer->getName() << "\n";
+   cout << "Email    : " << Database::loggedInBuyer->getEmail() << "\n";
    cout << "Saldo    : Rp " << customer->getBalance() << "\n";
    cout << "Status   : ";
-   if (loggedInSeller)
+   if (Database::loggedInSeller)
    {
       cout << "Seller & Buyer\n";
-      cout << "Nama Toko: " << loggedInSeller->getStoreName() << "\n";
+      cout << "Nama Toko: " << Database::loggedInSeller->getStoreName() << "\n";
    }
    else
    {
@@ -748,7 +722,7 @@ void handleListAllBankCustomers()
 {
    clearScreen();
    printHeader("Daftar Semua Nasabah Bank");
-   mainBank.showAllCustomers();
+   Database::mainBank.showAllCustomers();
    cout << "\nTekan [Enter] untuk kembali...";
    cin.get();
 }
@@ -756,7 +730,7 @@ void handleListAllBankCustomers()
 void handleListRecentBankTransactions()
 {
    clearScreen();
-   mainBank.listRecentTransactions(transactionLog);
+   Database::mainBank.listRecentTransactions(Database::transactionLog);
    cout << "\nTekan [Enter] untuk kembali...";
    cin.get();
 }
@@ -764,7 +738,7 @@ void handleListRecentBankTransactions()
 void handleListDormantAccounts()
 {
    clearScreen();
-   mainBank.listDormantAccounts(transactionLog);
+   Database::mainBank.listDormantAccounts(Database::transactionLog);
    cout << "\nTekan [Enter] untuk kembali...";
    cin.get();
 }
@@ -780,11 +754,11 @@ void handleListTopUsers()
 
    if (n == 0)
    {
-      globalMessage = "Operasi dibatalkan.";
+      Database::globalMessage = "Operasi dibatalkan.";
       return;
    }
 
-   mainBank.listTopUsersToday(transactionLog, n);
+   Database::mainBank.listTopUsersToday(Database::transactionLog, n);
    cout << "\nTekan [Enter] untuk kembali...";
    cin.get();
 }
@@ -800,7 +774,7 @@ void showBankMenu()
    {
       clearScreen();
       printHeader("Menu Laporan Bank");
-      displayGlobalMessage();
+      Database::displayGlobalMessage();
 
       cout << "1. Tampilkan Semua Nasabah\n";
       cout << "2. Tampilkan Transaksi (1 Minggu Terakhir)\n";
@@ -814,7 +788,7 @@ void showBankMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid.";
+         Database::globalMessage = "Input tidak valid.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -837,7 +811,7 @@ void showBankMenu()
          return;
       default:
          if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
+            Database::globalMessage = "Pilihan tidak valid.";
          break;
       }
    }
@@ -850,7 +824,7 @@ void showBuyerMenu()
    {
       clearScreen();
       printHeader("Menu Pembeli");
-      displayGlobalMessage();
+      Database::displayGlobalMessage();
 
       cout << "1. Beli Barang\n";
       cout << "2. Lihat Riwayat Pesanan\n";
@@ -865,7 +839,7 @@ void showBuyerMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid.";
+         Database::globalMessage = "Input tidak valid.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -891,7 +865,7 @@ void showBuyerMenu()
          return;
       default:
          if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
+            Database::globalMessage = "Pilihan tidak valid.";
          break;
       }
    }
@@ -903,8 +877,8 @@ void showManageStoreMenu()
    while (true)
    {
       clearScreen();
-      printHeader("Manajemen Toko: " + loggedInSeller->getStoreName());
-      displayGlobalMessage();
+      printHeader("Manajemen Toko: " + Database::loggedInSeller->getStoreName());
+      Database::displayGlobalMessage();
 
       cout << "1. Daftarkan Item Baru\n";
       cout << "2. Update Item (Stok/Harga/Buang)\n";
@@ -920,7 +894,7 @@ void showManageStoreMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid.";
+         Database::globalMessage = "Input tidak valid.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -935,8 +909,8 @@ void showManageStoreMenu()
          break;
       case 3:
          clearScreen();
-         printHeader("Daftar Item di " + loggedInSeller->getStoreName());
-         loggedInSeller->getStoreItems()->showAllItems();
+         printHeader("Daftar Item di " + Database::loggedInSeller->getStoreName());
+         Database::loggedInSeller->getStoreItems()->showAllItems();
          cout << "\nTekan [Enter] untuk kembali...";
          cin.get();
          break;
@@ -950,7 +924,7 @@ void showManageStoreMenu()
          return;
       default:
          if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
+            Database::globalMessage = "Pilihan tidak valid.";
          break;
       }
    }
@@ -963,7 +937,7 @@ void showRegisterMenu()
    {
       clearScreen();
       printHeader("Menu Registrasi");
-      displayGlobalMessage();
+      Database::displayGlobalMessage();
 
       cout << "1. Buat Akun Buyer\n";
       cout << "2. Kembali ke Menu Utama\n";
@@ -974,7 +948,7 @@ void showRegisterMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid. Harap masukkan angka.";
+         Database::globalMessage = "Input tidak valid. Harap masukkan angka.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -988,7 +962,7 @@ void showRegisterMenu()
          return;
       default:
          if (choice != 0)
-            globalMessage = "Pilihan tidak valid.";
+            Database::globalMessage = "Pilihan tidak valid.";
          break;
       }
    }
@@ -998,11 +972,11 @@ void showLoggedInMenu()
 {
    int choice = 0;
 
-   while (loggedInBuyer)
+   while (Database::loggedInBuyer)
    {
       clearScreen();
-      printHeader("Selamat Datang, " + loggedInBuyer->getName());
-      displayGlobalMessage();
+      printHeader("Selamat Datang, " + Database::loggedInBuyer->getName());
+      Database::displayGlobalMessage();
 
       cout << "1. Cek Status Akun\n";
       cout << "2. Menu Pembeli\n";
@@ -1013,7 +987,7 @@ void showLoggedInMenu()
       int logoutOption = 5;
       int exitOption = 6;
 
-      if (loggedInSeller)
+      if (Database::loggedInSeller)
       {
          sellerMenuOption = 5;
          cout << sellerMenuOption << ". Kelola Toko\n";
@@ -1030,7 +1004,7 @@ void showLoggedInMenu()
       if (cin.fail())
       {
          cin.clear();
-         globalMessage = "Input tidak valid.";
+         Database::globalMessage = "Input tidak valid.";
          choice = 0;
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -1043,7 +1017,7 @@ void showLoggedInMenu()
       {
          showBankMenu();
       }
-      else if (loggedInSeller && choice == sellerMenuOption)
+      else if (Database::loggedInSeller && choice == sellerMenuOption)
       {
          showManageStoreMenu();
       }
@@ -1068,7 +1042,7 @@ void showLoggedInMenu()
             break;
          default:
             if (choice != 0)
-               globalMessage = "Pilihan tidak valid.";
+               Database::globalMessage = "Pilihan tidak valid.";
             break;
          }
       }
@@ -1084,7 +1058,7 @@ int main()
    int choice = 0;
    while (true)
    {
-      if (loggedInBuyer)
+      if (Database::loggedInBuyer)
       {
          showLoggedInMenu();
       }
@@ -1092,7 +1066,7 @@ int main()
       {
          clearScreen();
          printHeader("E-COMMERCE MINI");
-         displayGlobalMessage();
+         Database::displayGlobalMessage();
 
          cout << "1. Registrasi\n";
          cout << "2. Login\n";
@@ -1104,7 +1078,7 @@ int main()
          if (cin.fail())
          {
             cin.clear();
-            globalMessage = "Input tidak valid. Harap masukkan angka.";
+            Database::globalMessage = "Input tidak valid. Harap masukkan angka.";
             choice = 0;
          }
          cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -1122,7 +1096,7 @@ int main()
             return 0;
          default:
             if (choice != 0)
-               globalMessage = "Pilihan tidak valid.";
+               Database::globalMessage = "Pilihan tidak valid.";
             break;
          }
       }
