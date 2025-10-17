@@ -49,17 +49,17 @@ void Bank::transfer(uint from, uint to, double amount)
    findCustomerById(to)->deposit(amount);
 }
 
-void Bank::listRecentTransactions(const vector<Transaction> &log) const
+void Bank::listRecentTransactions(const vector<Transaction> &log, int k_days) const
 {
-   printHeader("Transaksi Dalam 1 Minggu Terakhir");
+   printHeader("Transaksi Dalam " + to_string(k_days) + " Hari Terakhir");
 
    auto now = system_clock::now();
-   auto one_week_ago = now - hours(24 * 7);
+   auto k_days_ago = now - hours(24 * k_days);
    bool found = false;
 
    for (const auto &record : log)
    {
-      if (record.transactionDate >= one_week_ago)
+      if (record.transactionDate >= k_days_ago)
       {
          BankCustomer *buyer = findCustomerById(record.buyerId);
          BankCustomer *seller = findCustomerById(record.sellerId);
@@ -83,7 +83,7 @@ void Bank::listRecentTransactions(const vector<Transaction> &log) const
 
    if (!found)
    {
-      cout << "Tidak ada transaksi dalam seminggu terakhir.\n";
+      cout << "Tidak ada transaksi dalam " << k_days << " hari terakhir.\n";
    }
 }
 

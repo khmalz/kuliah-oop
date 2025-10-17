@@ -31,6 +31,7 @@ public:
    void updateExistingItem();
    void showTopKItems(const vector<Transaction> &allTransactions) const;
    void showLoyalCustomers(const vector<Transaction> &allTransactions) const;
+   void listPendingOrders(const vector<Transaction> &allTransactions) const;
 };
 
 #endif

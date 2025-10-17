@@ -157,6 +157,31 @@ void handleCheckStatus()
    cin.get();
 }
 
+void handleListRecentBankTransactions()
+{
+   printHeader("Tampilkan Transaksi Terbaru");
+
+   int k_days;
+   cout << "Tampilkan transaksi dalam (k) hari terakhir.\n";
+   cout << "Masukkan jumlah hari (k) (ketik 0 untuk batal): ";
+   cin >> k_days;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+   if (k_days == 0)
+   {
+      Database::globalMessage = "Operasi dibatalkan.";
+      return;
+   }
+   if (k_days < 0)
+   {
+      Database::globalMessage = "Jumlah hari tidak boleh negatif.";
+      return;
+   }
+
+   clearScreen();
+   Database::mainBank.listRecentTransactions(Database::transactionLog, k_days);
+}
+
 // =======================================================
 // Handler authentication
 // =======================================================
@@ -289,7 +314,7 @@ void showBankMenu()
       Database::displayGlobalMessage();
 
       cout << "1. Tampilkan Semua Nasabah\n";
-      cout << "2. Tampilkan Transaksi (1 Minggu Terakhir)\n";
+      cout << "2. Tampilkan Transaksi Beberapa Hari Terakhir\n";
       cout << "3. Tampilkan Akun Dormant (>30 Hari)\n";
       cout << "4. Tampilkan Top Pengguna Hari Ini\n";
       cout << "5. Kembali ke Menu Utama\n";
@@ -320,7 +345,7 @@ void showBankMenu()
             Database::mainBank.showAllCustomers();
             break;
          case 2:
-            Database::mainBank.listRecentTransactions(Database::transactionLog);
+            handleListRecentBankTransactions();
             break;
          case 3:
             Database::mainBank.listDormantAccounts(Database::transactionLog);
@@ -433,10 +458,11 @@ void showManageStoreMenu()
       cout << "1. Daftarkan Item Baru\n";
       cout << "2. Update Item (Stok/Harga/Buang)\n";
       cout << "3. Lihat Semua Item Toko\n";
+      cout << "4. Lihat Pesanan Menunggu Penyelesaian\n";
       cout << "--- Analisis Toko ---\n";
-      cout << "4. Lihat Item Terpopuler\n";
-      cout << "5. Lihat Pelanggan Loyal\n";
-      cout << "6. Kembali\n";
+      cout << "5. Lihat Item Terpopuler\n";
+      cout << "6. Lihat Pelanggan Loyal\n";
+      cout << "7. Kembali\n";
       cout << "----------------------------------------\n";
       cout << "Pilihan Anda: ";
       cin >> choice;
@@ -449,12 +475,12 @@ void showManageStoreMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      if (choice == 6)
+      if (choice == 7)
       {
          return;
       }
 
-      if (choice >= 1 && choice <= 5)
+      if (choice >= 1 && choice <= 6)
       {
          clearScreen();
 
@@ -473,9 +499,14 @@ void showManageStoreMenu()
             cin.get();
             break;
          case 4:
-            Database::loggedInSeller->showTopKItems(Database::transactionLog);
+            Database::loggedInSeller->listPendingOrders(Database::transactionLog);
+            cout << "\nTekan [Enter] untuk kembali...";
+            cin.get();
             break;
          case 5:
+            Database::loggedInSeller->showTopKItems(Database::transactionLog);
+            break;
+         case 6:
             Database::loggedInSeller->showLoyalCustomers(Database::transactionLog);
             break;
          }

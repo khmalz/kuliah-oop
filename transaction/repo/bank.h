@@ -20,7 +20,7 @@ public:
 
    void transfer(uint from, uint to, double amount);
 
-   void listRecentTransactions(const vector<Transaction> &log) const;
+   void listRecentTransactions(const vector<Transaction> &log, int k_days) const;
    void listDormantAccounts(const vector<Transaction> &log) const;
    void listTopUsersToday(const vector<Transaction> &log, int n) const;
 };

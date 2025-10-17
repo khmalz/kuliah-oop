@@ -273,3 +273,38 @@ void Seller::showLoyalCustomers(const vector<Transaction> &allTransactions) cons
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cin.get();
 }
+
+void Seller::listPendingOrders(const vector<Transaction> &allTransactions) const
+{
+    printHeader("Pesanan Menunggu Penyelesaian (Status PAID)");
+    cout << "Pesanan berikut perlu Anda siapkan/kirim:\n\n";
+
+    bool found = false;
+    for (const auto &record : allTransactions)
+    {
+        if (record.sellerId == this->buyer->getId() && record.status == PAID)
+        {
+            Buyer *buyerCustomer = nullptr;
+            for (auto &b : Database::buyers)
+            {
+                if (b.getId() == record.buyerId)
+                {
+                    buyerCustomer = &b;
+                    break;
+                }
+            }
+
+            cout << "ID Transaksi: " << record.transactionId << "\n";
+            cout << "Pembeli     : " << (buyerCustomer ? buyerCustomer->getName() : "N/A") << " (ID: " << record.buyerId << ")\n";
+            cout << "Item        : " << record.itemName << " (x" << record.quantity << ")\n";
+            cout << "Total       : Rp " << record.totalPrice << "\n";
+            cout << "----------------------------------------\n";
+            found = true;
+        }
+    }
+
+    if (!found)
+    {
+        cout << "Tidak ada pesanan yang menunggu penyelesaian saat ini.\n";
+    }
+}
