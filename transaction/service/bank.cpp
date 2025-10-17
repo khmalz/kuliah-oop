@@ -31,6 +31,8 @@ const vector<BankCustomer> &Bank::getAllCustomers() const
 
 void Bank::showAllCustomers()
 {
+   printHeader("Daftar Semua Nasabah Bank");
+
    for (const auto &c : customers)
    {
       cout << "Customer ID: " << c.getId()

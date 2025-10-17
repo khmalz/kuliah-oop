@@ -33,6 +33,7 @@ public:
    void checkSpending() const;
    void confirmReceipt(vector<Transaction> &allTransactions);
    void cancelOrder(vector<Transaction> &allTransactions, const vector<Seller> &allSellers);
+   void displayBasicInfo() const;
 };
 
 #endif

@@ -93,43 +93,8 @@ void handlePurchaseItem()
 }
 
 // =======================================================
-// Handler untuk Action
+// Handler action
 // =======================================================
-
-void handleRegisterBuyer()
-{
-   clearScreen();
-   printHeader("Registrasi Akun Buyer Baru");
-
-   string name, email;
-   double initialDeposit = 0;
-
-   cout << "Masukkan Nama Lengkap  (ketik 0 untuk batal): ";
-   getline(cin, name);
-   if (name == "0")
-   {
-      Database::globalMessage = "Registrasi dibatalkan.";
-      return;
-   }
-
-   cout << "Masukkan Email         : ";
-   getline(cin, email);
-
-   cout << "Masukkan Deposit Awal  : Rp ";
-   while (!(cin >> initialDeposit) || initialDeposit < 0)
-   {
-      cout << "Input tidak valid. Masukkan angka positif: Rp ";
-      cin.clear();
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-   }
-
-   uint newId = Database::buyers.size() + 1;
-   Database::buyers.emplace_back(newId, name, email, initialDeposit);
-
-   Database::mainBank.addCustomer(*(Database::buyers.back().getCustomer()));
-
-   Database::globalMessage = "Registrasi berhasil! ID Buyer Anda adalah " + to_string(newId);
-}
 
 void handleUpgradeToSeller()
 {
@@ -169,6 +134,67 @@ void handleUpgradeToSeller()
    Database::loggedInSeller = &Database::sellers.back();
 
    Database::globalMessage = "Upgrade berhasil! Anda sekarang adalah Seller.";
+}
+
+void handleCheckStatus()
+{
+   clearScreen();
+   printHeader("Status Akun");
+   BankCustomer *customer = Database::loggedInBuyer->getCustomer();
+
+   Database::loggedInBuyer->displayBasicInfo();
+   cout << "Status   : ";
+   if (Database::loggedInSeller)
+   {
+      cout << "Seller & Buyer\n";
+      cout << "Nama Toko: " << Database::loggedInSeller->getStoreName() << "\n";
+   }
+   else
+   {
+      cout << "Buyer\n";
+   }
+
+   cout << "\nTekan [Enter] untuk kembali...";
+   cin.get();
+}
+
+// =======================================================
+// Handler authentication
+// =======================================================
+
+void handleRegisterBuyer()
+{
+   clearScreen();
+   printHeader("Registrasi Akun Buyer Baru");
+
+   string name, email;
+   double initialDeposit = 0;
+
+   cout << "Masukkan Nama Lengkap  (ketik 0 untuk batal): ";
+   getline(cin, name);
+   if (name == "0")
+   {
+      Database::globalMessage = "Registrasi dibatalkan.";
+      return;
+   }
+
+   cout << "Masukkan Email         : ";
+   getline(cin, email);
+
+   cout << "Masukkan Deposit Awal  : Rp ";
+   while (!(cin >> initialDeposit) || initialDeposit < 0)
+   {
+      cout << "Input tidak valid. Masukkan angka positif: Rp ";
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   }
+
+   uint newId = Database::buyers.size() + 1;
+   Database::buyers.emplace_back(newId, name, email, initialDeposit);
+
+   Database::mainBank.addCustomer(*(Database::buyers.back().getCustomer()));
+
+   Database::globalMessage = "Registrasi berhasil! ID Buyer Anda adalah " + to_string(newId);
 }
 
 void handleLogin()
@@ -250,82 +276,8 @@ void handleLogout()
    }
 }
 
-void handleCheckStatus()
-{
-   clearScreen();
-   printHeader("Status Akun");
-   BankCustomer *customer = Database::loggedInBuyer->getCustomer();
-
-   cout << "ID       : " << Database::loggedInBuyer->getId() << "\n";
-   cout << "Nama     : " << Database::loggedInBuyer->getName() << "\n";
-   cout << "Email    : " << Database::loggedInBuyer->getEmail() << "\n";
-   cout << "Saldo    : Rp " << customer->getBalance() << "\n";
-   cout << "Status   : ";
-   if (Database::loggedInSeller)
-   {
-      cout << "Seller & Buyer\n";
-      cout << "Nama Toko: " << Database::loggedInSeller->getStoreName() << "\n";
-   }
-   else
-   {
-      cout << "Buyer\n";
-   }
-
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.get();
-}
-
 // =======================================================
-// Handler untuk Bank
-// =======================================================
-
-void handleListAllBankCustomers()
-{
-   clearScreen();
-   printHeader("Daftar Semua Nasabah Bank");
-   Database::mainBank.showAllCustomers();
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.get();
-}
-
-void handleListRecentBankTransactions()
-{
-   clearScreen();
-   Database::mainBank.listRecentTransactions(Database::transactionLog);
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.get();
-}
-
-void handleListDormantAccounts()
-{
-   clearScreen();
-   Database::mainBank.listDormantAccounts(Database::transactionLog);
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.get();
-}
-
-void handleListTopUsers()
-{
-   clearScreen();
-   printHeader("Top Pengguna Aktif Hari Ini");
-   int n;
-   cout << "Berapa pengguna teratas yang ingin ditampilkan? (ketik 0 untuk batal): ";
-   cin >> n;
-   cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-   if (n == 0)
-   {
-      Database::globalMessage = "Operasi dibatalkan.";
-      return;
-   }
-
-   Database::mainBank.listTopUsersToday(Database::transactionLog, n);
-   cout << "\nTekan [Enter] untuk kembali...";
-   cin.get();
-}
-
-// =======================================================
-// Hadnler untuk Menampilkan Menu-Menu
+// Handler untuk Menampilkan Menu-Menu
 // =======================================================
 
 void showBankMenu()
@@ -354,26 +306,50 @@ void showBankMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      switch (choice)
+      if (choice = 5)
       {
-      case 1:
-         handleListAllBankCustomers();
-         break;
-      case 2:
-         handleListRecentBankTransactions();
-         break;
-      case 3:
-         handleListDormantAccounts();
-         break;
-      case 4:
-         handleListTopUsers();
-         break;
-      case 5:
          return;
-      default:
+      }
+
+      if (choice >= 1 && choice <= 4)
+      {
+         clearScreen();
+
+         switch (choice)
+         {
+         case 1:
+            Database::mainBank.showAllCustomers();
+            break;
+         case 2:
+            Database::mainBank.listRecentTransactions(Database::transactionLog);
+            break;
+         case 3:
+            Database::mainBank.listDormantAccounts(Database::transactionLog);
+            break;
+         case 4:
+            printHeader("Top Pengguna Aktif Hari Ini");
+            int n;
+            cout << "Berapa pengguna teratas yang ingin ditampilkan? (ketik 0 untuk batal): ";
+            cin >> n;
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            if (n == 0)
+            {
+               Database::globalMessage = "Operasi dibatalkan.";
+               return;
+            }
+
+            Database::mainBank.listTopUsersToday(Database::transactionLog, n);
+            break;
+         }
+
+         cout << "\nTekan [Enter] untuk kembali...";
+         cin.get();
+      }
+      else
+      {
          if (choice != 0)
             Database::globalMessage = "Pilihan tidak valid.";
-         break;
       }
    }
 }

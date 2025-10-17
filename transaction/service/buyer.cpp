@@ -240,3 +240,11 @@ void Buyer::cancelOrder(vector<Transaction> &allTransactions, const vector<Selle
 
    Database::globalMessage = "Error: ID Transaksi tidak ditemukan atau statusnya bukan PAID.";
 }
+
+void Buyer::displayBasicInfo() const
+{
+   cout << "ID       : " << id << "\n";
+   cout << "Nama     : " << name << "\n";
+   cout << "Email    : " << email << "\n";
+   cout << "Saldo    : Rp " << customer.getBalance() << "\n";
+}
