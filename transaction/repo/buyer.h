@@ -3,12 +3,14 @@
 
 #include "bankCustomer.h"
 #include "items.h"
-#include "transaction.h"
+
 #include <string>
+#include <vector>
 
 using namespace std;
 
 class Seller;
+struct Transaction;
 
 class Buyer
 {
@@ -27,6 +29,10 @@ public:
    BankCustomer *getCustomer();
 
    void buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);
+   void listOrders(const vector<Transaction> &allTransactions) const;
+   void checkSpending() const;
+   void confirmReceipt(vector<Transaction> &allTransactions);
+   void cancelOrder(vector<Transaction> &allTransactions, const vector<Seller> &allSellers);
 };
 
 #endif
