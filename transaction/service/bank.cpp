@@ -179,3 +179,80 @@ void Bank::listTopUsersToday(const vector<Transaction> &log, int n) const
       }
    }
 }
+
+void Bank::listMostActiveBuyersToday(const vector<Transaction> &log, int n) const
+{
+   printHeader("Top " + to_string(n) + " Pembeli Aktif Hari Ini (by Transaksi)");
+
+   map<uint, int> buyerActivityCount;
+
+   for (const auto &record : log)
+   {
+      if (isToday(record.transactionDate))
+      {
+         buyerActivityCount[record.buyerId]++;
+      }
+   }
+
+   if (buyerActivityCount.empty())
+   {
+      cout << "Tidak ada aktivitas pembelian hari ini.\n";
+      return;
+   }
+
+   vector<pair<uint, int>> sortedBuyers(buyerActivityCount.begin(), buyerActivityCount.end());
+   sort(sortedBuyers.begin(), sortedBuyers.end(), [](const auto &a, const auto &b)
+        { return a.second > b.second; });
+
+   int count = 0;
+   for (const auto &pair : sortedBuyers)
+   {
+      if (count++ >= n)
+         break;
+
+      BankCustomer *customer = findCustomerById(pair.first);
+      if (customer)
+      {
+         cout << count << ". " << customer->getName() << " (ID: " << customer->getId()
+              << ") - Jumlah Pembelian: " << pair.second << "\n";
+      }
+   }
+}
+void Bank::listMostActiveSellersToday(const vector<Transaction> &log, int n) const
+{
+   printHeader("Top " + to_string(n) + " Penjual Aktif Hari Ini (by Transaksi)");
+
+   map<uint, int> sellerActivityCount;
+
+   for (const auto &record : log)
+   {
+      if (isToday(record.transactionDate))
+      {
+         sellerActivityCount[record.sellerId]++;
+      }
+   }
+
+   if (sellerActivityCount.empty())
+   {
+      cout << "Tidak ada aktivitas penjualan hari ini.\n";
+      return;
+   }
+
+   vector<pair<uint, int>> sortedSellers(sellerActivityCount.begin(), sellerActivityCount.end());
+   sort(sortedSellers.begin(), sortedSellers.end(), [](const auto &a, const auto &b)
+        { return a.second > b.second; });
+
+   int count = 0;
+   for (const auto &pair : sortedSellers)
+   {
+      if (count++ >= n)
+         break;
+
+      BankCustomer *customer = findCustomerById(pair.first);
+      if (customer)
+      {
+         cout << count << ". " << customer->getName() << " (ID: " << customer->getId()
+              << ") - Jumlah Penjualan: " << pair.second << "\n";
+      }
+   }
+}

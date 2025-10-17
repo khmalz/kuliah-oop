@@ -23,6 +23,9 @@ public:
    void listRecentTransactions(const vector<Transaction> &log, int k_days) const;
    void listDormantAccounts(const vector<Transaction> &log) const;
    void listTopUsersToday(const vector<Transaction> &log, int n) const;
+
+   void listMostActiveBuyersToday(const vector<Transaction> &log, int n) const;
+   void listMostActiveSellersToday(const vector<Transaction> &log, int n) const;
 };
 
 #endif

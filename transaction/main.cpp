@@ -182,6 +182,42 @@ void handleListRecentBankTransactions()
    Database::mainBank.listRecentTransactions(Database::transactionLog, k_days);
 }
 
+void handleListActiveBuyers()
+{
+   clearScreen();
+   printHeader("Top Pembeli Aktif Hari Ini");
+
+   int n;
+   cout << "Berapa pembeli teratas yang ingin ditampilkan? (ketik 0 untuk batal): ";
+   cin >> n;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   if (n == 0)
+   {
+      Database::globalMessage = "Operasi dibatalkan.";
+      return;
+   }
+
+   Database::mainBank.listMostActiveBuyersToday(Database::transactionLog, n);
+}
+
+void handleListActiveSellers()
+{
+   clearScreen();
+   printHeader("Top Penjual Aktif Hari Ini");
+
+   int n;
+   cout << "Berapa penjual teratas yang ingin ditampilkan? (ketik 0 untuk batal): ";
+   cin >> n;
+   cin.ignore(numeric_limits<streamsize>::max(), '\n');
+   if (n == 0)
+   {
+      Database::globalMessage = "Operasi dibatalkan.";
+      return;
+   }
+
+   Database::mainBank.listMostActiveSellersToday(Database::transactionLog, n);
+}
+
 // =======================================================
 // Handler authentication
 // =======================================================
@@ -317,7 +353,9 @@ void showBankMenu()
       cout << "2. Tampilkan Transaksi Beberapa Hari Terakhir\n";
       cout << "3. Tampilkan Akun Dormant (>30 Hari)\n";
       cout << "4. Tampilkan Top Pengguna Hari Ini\n";
-      cout << "5. Kembali ke Menu Utama\n";
+      cout << "5. Tampilkan Top Pembeli Hari Ini\n";
+      cout << "6. Tampilkan Top Penjual Hari Ini\n";
+      cout << "7. Kembali ke Menu Utama\n";
       cout << "----------------------------------------\n";
       cout << "Pilihan Anda: ";
       cin >> choice;
@@ -330,12 +368,12 @@ void showBankMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      if (choice == 5)
+      if (choice == 7)
       {
          return;
       }
 
-      if (choice >= 1 && choice <= 4)
+      if (choice >= 1 && choice <= 6)
       {
          clearScreen();
 
@@ -364,6 +402,12 @@ void showBankMenu()
             }
 
             Database::mainBank.listTopUsersToday(Database::transactionLog, n);
+            break;
+         case 5:
+            handleListActiveBuyers();
+            break;
+         case 6:
+            handleListActiveSellers();
             break;
          }
 
