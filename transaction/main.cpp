@@ -140,7 +140,6 @@ void handleCheckStatus()
 {
    clearScreen();
    printHeader("Status Akun");
-   BankCustomer *customer = Database::loggedInBuyer->getCustomer();
 
    Database::loggedInBuyer->displayBasicInfo();
    cout << "Status   : ";
@@ -306,7 +305,7 @@ void showBankMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      if (choice = 5)
+      if (choice == 5)
       {
          return;
       }
@@ -365,10 +364,11 @@ void showBuyerMenu()
 
       cout << "1. Beli Barang\n";
       cout << "2. Lihat Riwayat Pesanan\n";
-      cout << "3. Cek Pengeluaran Terakhir\n";
-      cout << "4. Konfirmasi Penerimaan Barang\n";
-      cout << "5. Batalkan Pesanan\n";
-      cout << "6. Kembali ke Menu Utama\n";
+      cout << "3. Cek Pengeluaran Pada Beberapa Hari Terakhir\n";
+      cout << "4. Lihat Cash Flow\n";
+      cout << "5. Konfirmasi Penerimaan Barang\n";
+      cout << "6. Batalkan Pesanan\n";
+      cout << "7. Kembali ke Menu Utama\n";
       cout << "----------------------------------------\n";
       cout << "Pilihan Anda: ";
       cin >> choice;
@@ -381,12 +381,12 @@ void showBuyerMenu()
       }
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-      if (choice == 6)
+      if (choice == 7)
       {
          return;
       }
 
-      if (choice >= 1 && choice <= 5)
+      if (choice >= 1 && choice <= 6)
       {
          clearScreen();
 
@@ -402,9 +402,12 @@ void showBuyerMenu()
             Database::loggedInBuyer->checkSpending();
             break;
          case 4:
-            Database::loggedInBuyer->confirmReceipt(Database::transactionLog);
+            Database::loggedInBuyer->showCashFlow();
             break;
          case 5:
+            Database::loggedInBuyer->confirmReceipt(Database::transactionLog);
+            break;
+         case 6:
             Database::loggedInBuyer->cancelOrder(Database::transactionLog, Database::sellers);
             break;
          }

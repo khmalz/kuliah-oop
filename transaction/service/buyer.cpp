@@ -248,3 +248,63 @@ void Buyer::displayBasicInfo() const
    cout << "Email    : " << email << "\n";
    cout << "Saldo    : Rp " << customer.getBalance() << "\n";
 }
+
+void Buyer::showCashFlow() const
+{
+   int choice;
+   while (true)
+   {
+      clearScreen();
+      printHeader("Lihat Cash Flow Akun Bank");
+      Database::displayGlobalMessage();
+
+      cout << "Pilih periode waktu:\n";
+      cout << "1. Hari Ini\n";
+      cout << "2. 30 Hari Terakhir\n";
+      cout << "0. Kembali ke Menu Pembeli\n";
+      cout << "----------------------------------------\n";
+      cout << "Pilihan Anda: ";
+
+      cin >> choice;
+
+      if (cin.fail())
+      {
+         cin.clear();
+         Database::globalMessage = "Input tidak valid. Harap masukkan angka.";
+         choice = -1;
+      }
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      BankCashFlowFilter filter;
+      bool shouldDisplay = false;
+
+      switch (choice)
+      {
+      case 1:
+         filter = BankCashFlowFilter::TODAY;
+         shouldDisplay = true;
+         break;
+      case 2:
+         filter = BankCashFlowFilter::LAST_MONTH;
+         shouldDisplay = true;
+         break;
+      case 0:
+         return;
+      default:
+         if (choice != -1)
+         {
+            Database::globalMessage = "Pilihan periode tidak valid.";
+         }
+         continue;
+      }
+
+      if (shouldDisplay)
+      {
+         clearScreen();
+         customer.displayCashFlowHistory(filter);
+
+         cout << "\nTekan [Enter] untuk kembali ke pilihan periode...";
+         cin.get();
+      }
+   }
+}

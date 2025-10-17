@@ -9,6 +9,12 @@
 
 using namespace std;
 
+enum class CashFlowFilter
+{
+   TODAY,
+   LAST_MONTH
+};
+
 class Seller;
 struct Transaction;
 
@@ -28,12 +34,13 @@ public:
    string getEmail() const;
    BankCustomer *getCustomer();
 
+   void displayBasicInfo() const;
    void buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);
    void listOrders(const vector<Transaction> &allTransactions) const;
-   void checkSpending() const;
    void confirmReceipt(vector<Transaction> &allTransactions);
    void cancelOrder(vector<Transaction> &allTransactions, const vector<Seller> &allSellers);
-   void displayBasicInfo() const;
+   void showCashFlow() const;
+   void checkSpending() const;
 };
 
 #endif
