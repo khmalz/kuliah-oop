@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <chrono>
+#include <functional>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace chrono;
@@ -77,4 +80,69 @@ inline string maskBankId(uint id)
       return idStr.substr(0, 2) + string(idStr.length() - 2, 'x');
    }
    return idStr;
+}
+
+inline bool loadDataFromFile(const string &filename, function<bool(const string &)> processLine)
+{
+   ifstream file(filename);
+   if (!file.is_open())
+   {
+      cout << "Data file not found: " << filename << ". Starting fresh for this data type." << endl;
+      return false;
+   }
+
+   string line;
+   int lineNumber = 0;
+   bool success = true;
+
+   while (getline(file, line))
+   {
+      lineNumber++;
+      if (line.empty())
+      {
+         continue;
+      }
+      if (!processLine(line))
+      {
+         cerr << "Error processing line " << lineNumber << " in file " << filename << ": " << line << endl;
+         success = false;
+
+         break;
+      }
+   }
+
+   file.close();
+   return success;
+}
+
+template <typename Container, typename T = typename Container::value_type>
+inline bool saveDataToFile(const string &filename, const Container &data_source, function<string(const T &)> formatItem)
+{
+   ofstream file(filename);
+   if (!file.is_open())
+   {
+      cerr << "Error: Could not open file " << filename << " for saving." << endl;
+      return false;
+   }
+
+   for (const T &item : data_source)
+   {
+      string line = formatItem(item);
+      file << line << endl;
+   }
+
+   file.close();
+   return true;
+}
+
+inline string replaceSpaces(string s, char replace_with = '_')
+{
+   replace(s.begin(), s.end(), ' ', replace_with);
+   return s;
+}
+
+inline string restoreSpaces(string s, char replace_char = '_')
+{
+   replace(s.begin(), s.end(), replace_char, ' ');
+   return s;
 }

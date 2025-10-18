@@ -21,6 +21,16 @@ string Seller::getStoreName() const
     return storeName;
 }
 
+string Seller::getStoreAddress() const
+{
+    return storeAddress;
+}
+
+string Seller::getStoreEmail() const
+{
+    return storeEmail;
+}
+
 BankCustomer *Seller::getCustomerAccount() const
 {
     return buyer->getCustomer();

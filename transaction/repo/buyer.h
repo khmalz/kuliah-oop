@@ -26,7 +26,7 @@ public:
    uint getId() const;
    string getName() const;
    string getEmail() const;
-   BankCustomer *getCustomer();
+   BankCustomer *getCustomer() const;
 
    void displayBasicInfo() const;
    void buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);

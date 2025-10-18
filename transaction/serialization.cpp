@@ -1,0 +1,237 @@
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <functional>
+#include <stdexcept>
+#include <limits>
+#include <algorithm>
+
+#include "database.cpp"
+
+using namespace std;
+
+struct TempSellerData
+{
+   uint buyerId;
+   string storeName;
+   string storeAddress;
+   string storeEmail;
+};
+
+class Serialization
+{
+private:
+   static bool loadBuyersFromFile(const string &filename = "data/buyers.txt")
+   {
+      cout << "Attempting to load buyers from: " << filename << endl;
+      Database::buyers.clear();
+      Database::mainBank = Bank();
+      uint maxId = 0;
+
+      const function<bool(const string &)> processLine = [&](const string &line)
+      {
+         stringstream ss(line);
+         string segment;
+         vector<string> data;
+         while (getline(ss, segment, ';'))
+         {
+            data.push_back(segment);
+         }
+
+         if (data.size() == 5)
+         {
+            try
+            {
+               uint id = stoul(data[0]);
+               string name = restoreSpaces(data[1]);
+               string email = data[2];
+               double balance = stod(data[4]);
+
+               Database::buyers.emplace_back(id, name, email, balance);
+               Database::mainBank.addCustomer(*(Database::buyers.back().getCustomer()));
+               if (id > maxId)
+                  maxId = id;
+               return true;
+            }
+            catch (const exception &e)
+            {
+               cerr << " -> Failed parsing buyer data: (" << e.what() << ")";
+               return false;
+            }
+         }
+         cerr << " -> Skipping invalid buyer data line (expected 5 columns, got " << data.size() << ")";
+         return false;
+      };
+
+      bool success = loadDataFromFile(filename, processLine);
+
+      if (success)
+         cout << "Buyers loaded successfully." << endl;
+      else
+         cout << "Finished loading buyers with some errors." << endl;
+      return success;
+   }
+
+   static bool loadSellersFromFile(const string &filename = "data/sellers.txt")
+   {
+      cout << "Attempting to load sellers from: " << filename << endl;
+      Database::sellers.clear();
+      vector<TempSellerData> tempData;
+
+      const function<bool(const string &)> processLine = [&](const string &line)
+      {
+         stringstream ss(line);
+         string segment;
+         vector<string> data;
+         while (getline(ss, segment, ';'))
+         {
+            data.push_back(segment);
+         }
+
+         if (data.size() == 4)
+         {
+            try
+            {
+               uint buyerId = stoul(data[0]);
+               string storeName = restoreSpaces(data[1]);
+               string storeAddress = restoreSpaces(data[2]);
+               string storeEmail = data[3];
+               tempData.push_back({buyerId, storeName, storeAddress, storeEmail});
+               return true;
+            }
+            catch (const exception &e)
+            {
+               cerr << " -> Failed parsing seller data: (" << e.what() << ")";
+               return false;
+            }
+         }
+         cerr << " -> Skipping invalid seller data line (expected 4 columns, got " << data.size() << ")";
+         return false;
+      };
+
+      bool readSuccess = loadDataFromFile(filename, processLine);
+
+      if (!readSuccess)
+      {
+         cout << "Finished reading sellers file with errors. Pointer fixing might be incomplete." << endl;
+      }
+
+      bool allPointersFixed = true;
+      for (const auto &temp : tempData)
+      {
+         Buyer *foundBuyer = nullptr;
+         for (auto &buyer : Database::buyers)
+         {
+            if (buyer.getId() == temp.buyerId)
+            {
+               foundBuyer = &buyer;
+               break;
+            }
+         }
+
+         if (foundBuyer)
+         {
+            Database::sellers.emplace_back(foundBuyer, temp.storeName, temp.storeAddress, temp.storeEmail);
+         }
+         else
+         {
+            cerr << "Warning: Could not find Buyer ID " << temp.buyerId << " for seller '" << temp.storeName << "'. Skipping seller." << endl;
+            allPointersFixed = false;
+         }
+      }
+
+      if (allPointersFixed)
+         cout << "Seller pointers fixed successfully." << endl;
+      else
+         cout << "Finished fixing seller pointers with some errors (missing buyers)." << endl;
+
+      return readSuccess && allPointersFixed;
+   }
+
+   static bool saveBuyersToFile(const string &filename = "data/buyers.txt")
+   {
+      cout << "Attempting to save buyers to: " << filename << endl;
+
+      function<string(const Buyer &)> formatBuyer =
+          [](const Buyer &buyer) -> string
+      {
+         string line = "";
+         BankCustomer *customer = nullptr;
+
+         customer = buyer.getCustomer();
+
+         if (customer)
+         {
+            line = to_string(buyer.getId()) + ";" +
+                   replaceSpaces(buyer.getName()) + ";" +
+                   buyer.getEmail() + ";" +
+                   to_string(customer->getBankAccountId()) + ";" +
+                   to_string(customer->getBalance());
+         }
+         else
+         {
+            cerr << " -> Warning: Skipping buyer ID " << buyer.getId() << " (no customer data)." << endl;
+         }
+         return line;
+      };
+
+      bool success = saveDataToFile<vector<Buyer>>(filename, Database::buyers, formatBuyer);
+
+      if (success)
+         cout << "Buyers saved successfully." << endl;
+      else
+         cerr << " -> Failed to save buyers completely to " << filename << endl;
+      return success;
+   }
+
+   static bool saveSellersToFile(const string &filename = "data/sellers.txt")
+   {
+      cout << "Attempting to save sellers to: " << filename << endl;
+
+      function<string(const Seller &)> formatSeller =
+          [](const Seller &seller) -> string
+      {
+         string line = "";
+         if (seller.getBuyer())
+         {
+            line = to_string(seller.getBuyer()->getId()) + ";" +
+                   replaceSpaces(seller.getStoreName()) + ";" +
+                   replaceSpaces(seller.getStoreAddress()) + ";" +
+                   seller.getStoreEmail();
+         }
+         else
+         {
+            cerr << " -> Warning: Skipping seller '" << seller.getStoreName() << "' (null buyer pointer)." << endl;
+         }
+         return line;
+      };
+
+      bool success = saveDataToFile<vector<Seller>>(filename, Database::sellers, formatSeller);
+
+      if (success)
+         cout << "Sellers saved successfully." << endl;
+      else
+         cerr << " -> Failed to save sellers completely to " << filename << endl;
+      return success;
+   }
+
+public:
+   inline static void loadAllData()
+   {
+      loadBuyersFromFile();
+      loadSellersFromFile();
+      cout << "----------------------------------------" << endl;
+      cout << "All data loading process finished." << endl;
+      cout << "----------------------------------------" << endl;
+   }
+
+   inline static void saveAllData()
+   {
+      saveBuyersToFile();
+      saveSellersToFile();
+      cout << "----------------------------------------" << endl;
+      cout << "Data saving process finished." << endl;
+      cout << "----------------------------------------" << endl;
+   }
+};

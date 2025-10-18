@@ -24,6 +24,8 @@ public:
 
    Buyer *getBuyer() const;
    string getStoreName() const;
+   string getStoreAddress() const;
+   string getStoreEmail() const;
    BankCustomer *getCustomerAccount() const;
    Items *getStoreItems();
 

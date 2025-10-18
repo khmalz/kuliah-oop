@@ -20,7 +20,7 @@ uint Buyer::getId() const { return id; }
 string Buyer::getName() const { return name; }
 string Buyer::getEmail() const { return email; }
 
-BankCustomer *Buyer::getCustomer() { return &customer; }
+BankCustomer *Buyer::getCustomer() const { return const_cast<BankCustomer *>(&customer); }
 
 void Buyer::buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log)
 {

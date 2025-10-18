@@ -13,6 +13,7 @@
 #include "repo/transaction.h"
 #include "utils.cpp"
 #include "database.cpp"
+#include "serialization.cpp"
 
 using namespace std;
 using namespace chrono;
@@ -662,6 +663,7 @@ void showLoggedInMenu()
       }
       else if (choice == exitOption)
       {
+         Serialization::saveAllData();
          cout << "Terima kasih!\n";
          exit(0);
       }
@@ -690,7 +692,12 @@ void showLoggedInMenu()
 
 int main()
 {
-   Database::seedDatabase();
+   Serialization::loadAllData();
+
+   if (Database::buyers.empty())
+   {
+      Database::seedDatabase();
+   }
 
    int choice = 0;
    while (true)
@@ -729,6 +736,7 @@ int main()
             handleLogin();
             break;
          case 3:
+            Serialization::saveAllData();
             cout << "Terima kasih!\n";
             return 0;
          default:
