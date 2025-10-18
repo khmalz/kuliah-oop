@@ -1,3 +1,6 @@
+#ifndef SERIALIZATION_CPP
+#define SERIALIZATION_CPP
+
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -8,6 +11,7 @@
 #include <algorithm>
 
 #include "database.cpp"
+#include "utils.cpp"
 
 using namespace std;
 
@@ -235,3 +239,5 @@ public:
       cout << "----------------------------------------" << endl;
    }
 };
+
+#endif

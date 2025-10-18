@@ -1,3 +1,6 @@
+#ifndef UTILS_CPP
+#define UTILS_CPP
+
 #include "repo/transaction.h"
 
 #include <iostream>
@@ -146,3 +149,5 @@ inline string restoreSpaces(string s, char replace_char = '_')
    replace(s.begin(), s.end(), replace_char, ' ');
    return s;
 }
+
+#endif
