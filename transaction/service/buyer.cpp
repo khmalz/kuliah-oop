@@ -41,8 +41,11 @@ void Buyer::buyItem(uint transactionId, Seller *seller, Items &items, uint itemI
       throw runtime_error("Not enough balance");
    }
 
-   customer.withdraw(totalPrice);
-   seller->getCustomerAccount()->deposit(totalPrice);
+   auto transactionTimestamp = system_clock::now();
+
+   customer.withdraw(totalPrice, transactionTimestamp);
+   seller->getCustomerAccount()->deposit(totalPrice, transactionTimestamp);
+
    item->decreaseQuantity(qty);
 
    log.emplace_back(
@@ -54,6 +57,7 @@ void Buyer::buyItem(uint transactionId, Seller *seller, Items &items, uint itemI
        seller->getStoreName(),
        qty,
        totalPrice);
+   log.back().transactionDate = transactionTimestamp;
 }
 
 void Buyer::listOrders(const vector<Transaction> &allTransactions) const
@@ -224,15 +228,18 @@ void Buyer::cancelOrder(vector<Transaction> &allTransactions, const vector<Selle
             }
          }
 
+         auto cancelTimestamp = system_clock::now();
          BankCustomer *buyerAccount = getCustomer();
          if (sellerOfItem)
          {
             BankCustomer *sellerAccount = sellerOfItem->getCustomerAccount();
-            sellerAccount->withdraw(record.totalPrice);
-            buyerAccount->deposit(record.totalPrice);
+            sellerAccount->withdraw(record.totalPrice, cancelTimestamp);
+            buyerAccount->deposit(record.totalPrice, cancelTimestamp);
          }
 
          record.status = CANCELED;
+         record.transactionDate = cancelTimestamp;
+
          Database::globalMessage = "Transaksi #" + to_string(idToCancel) + " berhasil dibatalkan dan dana telah dikembalikan.";
          return;
       }

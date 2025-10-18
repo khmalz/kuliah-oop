@@ -43,12 +43,6 @@ void Bank::showAllCustomers()
    }
 }
 
-void Bank::transfer(uint from, uint to, double amount)
-{
-   findCustomerById(from)->withdraw(amount);
-   findCustomerById(to)->deposit(amount);
-}
-
 void Bank::listRecentTransactions(const vector<Transaction> &log, int k_days) const
 {
    printHeader("Transaksi Dalam " + to_string(k_days) + " Hari Terakhir");

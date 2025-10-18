@@ -9,12 +9,6 @@
 
 using namespace std;
 
-enum class CashFlowFilter
-{
-   TODAY,
-   LAST_MONTH
-};
-
 class Seller;
 struct Transaction;
 

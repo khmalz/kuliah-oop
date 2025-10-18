@@ -5,8 +5,14 @@
 #include <iostream>
 #include <iomanip>
 
-BankCustomer::BankCustomer(uint id, const std::string &name, const std::string &email, uint bankAccountId, double initialDeposit)
-    : id(id), name(name), email(email), bankAccountId(bankAccountId), balance(initialDeposit) {}
+BankCustomer::BankCustomer(uint id, const string &name, const string &email, uint bankAccountId, double initialDeposit)
+    : id(id), name(name), email(email), bankAccountId(bankAccountId), balance(initialDeposit)
+{
+   if (initialDeposit > 0)
+   {
+      history.emplace_back(BankTransactionType::DEPOSIT, initialDeposit, system_clock::now());
+   }
+}
 
 uint BankCustomer::getId() const { return id; }
 std::string BankCustomer::getName() const { return name; }
@@ -14,7 +20,13 @@ std::string BankCustomer::getEmail() const { return email; }
 uint BankCustomer::getBankAccountId() const { return bankAccountId; }
 double BankCustomer::getBalance() const { return balance; }
 
-void BankCustomer::withdraw(double amount)
+const vector<BankTransactionRecord> &BankCustomer::getHistory() const { return history; }
+void BankCustomer::addBankHistoryRecord(BankTransactionType type, double amount, system_clock::time_point timestamp)
+{
+   history.emplace_back(type, amount, timestamp);
+}
+
+void BankCustomer::withdraw(double amount, system_clock::time_point timestamp)
 {
    if (amount <= 0)
    {
@@ -25,17 +37,17 @@ void BankCustomer::withdraw(double amount)
       throw runtime_error("Withdrawal amount exceeds balance.");
    }
    balance -= amount;
-   history.emplace_back(BankTransactionType::WITHDRAWAL, amount);
+   addBankHistoryRecord(BankTransactionType::WITHDRAWAL, amount, timestamp);
 }
 
-void BankCustomer::deposit(double amount)
+void BankCustomer::deposit(double amount, system_clock::time_point timestamp)
 {
    if (amount <= 0)
    {
       throw runtime_error("Deposit amount must be positive.");
    }
    balance += amount;
-   history.emplace_back(BankTransactionType::DEPOSIT, amount);
+   addBankHistoryRecord(BankTransactionType::DEPOSIT, amount, timestamp);
 }
 
 void BankCustomer::displayCashFlowHistory(BankCashFlowFilter filter) const

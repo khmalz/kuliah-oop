@@ -690,6 +690,8 @@ void showLoggedInMenu()
 
 int main()
 {
+   Database::seedDatabase();
+
    int choice = 0;
    while (true)
    {
