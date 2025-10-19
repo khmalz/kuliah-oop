@@ -33,7 +33,7 @@ app_sources = [
   'service/seller.cpp'
 ]
 
-executable('my_app',
+executable('app',
     app_sources,
     # Example dependencies:
     # dependencies: [fmt_dep],
