@@ -106,15 +106,9 @@ public:
             continue;
          }
 
-         if (buyer->getId() == seller->getBuyer()->getId())
-         {
-            // Ulang
-            i--;
-            continue;
-         }
-
          Items *sellerItems = seller->getStoreItems();
-         if (sellerItems->getItems().empty())
+
+         if (buyer->getId() == seller->getBuyer()->getId() || sellerItems->getItems().empty())
          {
             // Ulang
             i--;
@@ -144,6 +138,24 @@ public:
          }
          auto transactionTimestamp = system_clock::now() - hours(24 * daysAgo);
 
+         uniform_int_distribution<int> statusDist(1, 100);
+         int statusRoll = statusDist(rng);
+
+         // 70% COMPLETED, 25% PAID, 5% CANCELED
+         OrderStatus tStatus;
+         if (statusRoll <= 70)
+         {
+            tStatus = COMPLETED;
+         }
+         else if (statusRoll <= 95)
+         {
+            tStatus = PAID;
+         }
+         else
+         {
+            tStatus = CANCELED;
+         }
+
          uint transactionId = nextTransactionId++;
          Transaction newTransaction(
              transactionId,
@@ -153,28 +165,9 @@ public:
              item->getName(),
              seller->getStoreName(),
              quantity,
-             totalPrice);
-         newTransaction.transactionDate = transactionTimestamp;
+             totalPrice, transactionTimestamp, tStatus);
 
-         // 70% COMPLETED, 25% PAID, 5% CANCELED
-         uniform_int_distribution<int> statusDist(1, 100);
-         int statusRoll = statusDist(rng);
-         if (statusRoll <= 70)
-         {
-            newTransaction.status = COMPLETED;
-         }
-         else if (statusRoll <= 95)
-         {
-            newTransaction.status = PAID;
-         }
-         else
-         {
-            newTransaction.status = CANCELED;
-         }
-
-         transactionLog.push_back(newTransaction);
-
-         if (newTransaction.status != CANCELED)
+         if (tStatus != CANCELED)
          {
             buyer->getCustomer()->addBankHistoryRecord(BankTransactionType::WITHDRAWAL, totalPrice, transactionTimestamp);
             seller->getCustomerAccount()->addBankHistoryRecord(BankTransactionType::DEPOSIT, totalPrice, transactionTimestamp);

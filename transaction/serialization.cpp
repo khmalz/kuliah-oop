@@ -32,16 +32,8 @@ private:
       Database::buyers.clear();
       Database::mainBank = Bank();
 
-      const function<bool(const string &)> processLine = [&](const string &line)
+      const function<bool(const vector<string> &)> processLine = [&](const vector<string> &data)
       {
-         stringstream ss(line);
-         string segment;
-         vector<string> data;
-         while (getline(ss, segment, ';'))
-         {
-            data.push_back(segment);
-         }
-
          if (data.size() == 5)
          {
             try
@@ -66,11 +58,14 @@ private:
       };
 
       bool success = loadDataFromFile(filename, processLine);
+      const char *message;
 
       if (success)
-         cout << "Buyers loaded successfully." << endl;
+         message = "Buyers loaded successfully.";
       else
-         cout << "Finished loading buyers with some errors." << endl;
+         message = "Failed to load buyers completely.";
+
+      cout << message << endl;
       return success;
    }
 
@@ -80,16 +75,8 @@ private:
       Database::sellers.clear();
       vector<TempSellerData> tempData;
 
-      const function<bool(const string &)> processLine = [&](const string &line)
+      const function<bool(const vector<string> &)> processLine = [&](const vector<string> &data)
       {
-         stringstream ss(line);
-         string segment;
-         vector<string> data;
-         while (getline(ss, segment, ';'))
-         {
-            data.push_back(segment);
-         }
-
          if (data.size() == 4)
          {
             try
@@ -156,16 +143,8 @@ private:
       Database::transactionLog.clear();
       uint maxTransactionId = 0;
 
-      const function<bool(const string &)> processLine = [&](const string &line)
+      const function<bool(const vector<string> &)> processLine = [&](const vector<string> &data)
       {
-         stringstream ss(line);
-         string segment;
-         vector<string> data;
-         while (getline(ss, segment, ';'))
-         {
-            data.push_back(segment);
-         }
-
          if (data.size() == 10)
          {
             try
@@ -178,10 +157,11 @@ private:
                string sellerStoreName = restoreSpaces(data[5]);
                int quantity = stoi(data[6]);
                double totalPrice = stod(data[7]);
-               long long timestamp_ll = stoll(data[8]);
+               time_t timestamp_ll = stoll(data[8]);
                int statusInt = stoi(data[9]);
 
                system_clock::time_point transactionTimestamp = system_clock::from_time_t(timestamp_ll);
+
                OrderStatus status = static_cast<OrderStatus>(statusInt);
                if (status < PAID || status > CANCELED)
                {
@@ -190,9 +170,7 @@ private:
 
                Database::transactionLog.emplace_back(
                    transactionId, buyerId, sellerId, itemId,
-                   itemName, sellerStoreName, quantity, totalPrice);
-               Database::transactionLog.back().transactionDate = transactionTimestamp;
-               Database::transactionLog.back().status = status;
+                   itemName, sellerStoreName, quantity, totalPrice, transactionTimestamp, status);
 
                if (transactionId > maxTransactionId)
                {
@@ -289,7 +267,7 @@ private:
       return success;
    }
 
-   inline static bool saveTransactionsToFile(const string &filename = "data/transactions.txt")
+   static bool saveTransactionsToFile(const string &filename = "data/transactions.txt")
    {
       cout << "Attempting to save transactions to: " << filename << endl;
 

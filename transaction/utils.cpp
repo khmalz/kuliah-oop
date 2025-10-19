@@ -85,7 +85,35 @@ inline string maskBankId(uint id)
    return idStr;
 }
 
-inline bool loadDataFromFile(const string &filename, function<bool(const string &)> processLine)
+// I/O File
+
+inline string replaceSpaces(string s, char replace_with = '_')
+{
+   replace(s.begin(), s.end(), ' ', replace_with);
+   return s;
+}
+
+inline string restoreSpaces(string s, char replace_char = '_')
+{
+   replace(s.begin(), s.end(), replace_char, ' ');
+   return s;
+}
+
+inline vector<string> getDataFromLine(const string &line)
+{
+   vector<string> data;
+
+   stringstream ss(line);
+   string segment;
+   while (getline(ss, segment, ';'))
+   {
+      data.push_back(segment);
+   }
+
+   return data;
+}
+
+inline bool loadDataFromFile(const string &filename, function<bool(const vector<string> &)> processLine)
 {
    ifstream file(filename);
    if (!file.is_open())
@@ -105,7 +133,10 @@ inline bool loadDataFromFile(const string &filename, function<bool(const string 
       {
          continue;
       }
-      if (!processLine(line))
+
+      vector<string> data = getDataFromLine(line);
+
+      if (!processLine(data))
       {
          cerr << "Error processing line " << lineNumber << " in file " << filename << ": " << line << endl;
          success = false;
@@ -136,18 +167,6 @@ inline bool saveDataToFile(const string &filename, const Container &data_source,
 
    file.close();
    return true;
-}
-
-inline string replaceSpaces(string s, char replace_with = '_')
-{
-   replace(s.begin(), s.end(), ' ', replace_with);
-   return s;
-}
-
-inline string restoreSpaces(string s, char replace_char = '_')
-{
-   replace(s.begin(), s.end(), replace_char, ' ');
-   return s;
 }
 
 #endif
