@@ -10,19 +10,19 @@
 using namespace std;
 using namespace chrono;
 
-Buyer::Buyer(uint id, const string &name, const string &email, double initialDeposit)
+Buyer::Buyer(unsigned int id, const string &name, const string &email, double initialDeposit)
     : id(id), name(name), email(email),
       customer(id, name, email, id + 1000, initialDeposit)
 {
 }
 
-uint Buyer::getId() const { return id; }
+unsigned int Buyer::getId() const { return id; }
 string Buyer::getName() const { return name; }
 string Buyer::getEmail() const { return email; }
 
 BankCustomer *Buyer::getCustomer() const { return const_cast<BankCustomer *>(&customer); }
 
-void Buyer::buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log)
+void Buyer::buyItem(unsigned int transactionId, Seller *seller, Items &items, unsigned int itemId, int qty, vector<Transaction> &log)
 {
    Item *item = items.findItemById(itemId);
    if (!item)
@@ -146,7 +146,7 @@ void Buyer::confirmReceipt(vector<Transaction> &allTransactions)
    }
    cout << "--------------------------------------------------------\n";
 
-   uint idToConfirm;
+   unsigned int idToConfirm;
    cout << "Masukkan ID Transaksi yang ingin dikonfirmasi (ketik 0 untuk batal): ";
    cin >> idToConfirm;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -194,7 +194,7 @@ void Buyer::cancelOrder(vector<Transaction> &allTransactions, const vector<Selle
    }
    cout << "--------------------------------------------------------\n";
 
-   uint idToCancel;
+   unsigned int idToCancel;
    cout << "Masukkan ID Transaksi yang ingin dibatalkan (ketik 0 untuk batal): ";
    cin >> idToCancel;
    cin.ignore(numeric_limits<streamsize>::max(), '\n');

@@ -75,7 +75,7 @@ inline pair<int, int> getMonthYear(const system_clock::time_point &timepoint)
    return {localTime->tm_mon + 1, localTime->tm_year + 1900};
 }
 
-inline string maskBankId(uint id)
+inline string maskBankId(unsigned int id)
 {
    string idStr = to_string(id);
    if (idStr.length() > 2)

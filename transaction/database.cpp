@@ -28,8 +28,8 @@ public:
    inline static string globalMessage = "";
    inline static Buyer *loggedInBuyer = nullptr;
    inline static Seller *loggedInSeller = nullptr;
-   inline static uint nextItemId = 1;
-   inline static uint nextTransactionId = 1001;
+   inline static unsigned int nextItemId = 1;
+   inline static unsigned int nextTransactionId = 1001;
 
    inline static void displayGlobalMessage()
    {
@@ -81,7 +81,7 @@ public:
 
       seedBuyerSeler();
 
-      mt19937 rng(static_cast<uint>(system_clock::now().time_since_epoch().count()));
+      mt19937 rng(static_cast<unsigned int>(system_clock::now().time_since_epoch().count()));
       // Seeding Transaksi Historis ( antara 90 hari terakhir)
       uniform_int_distribution<int> buyerDist(0, buyers.size() - 1);
       uniform_int_distribution<int> sellerDist(0, sellers.size() - 1);
@@ -156,7 +156,7 @@ public:
             tStatus = CANCELED;
          }
 
-         uint transactionId = nextTransactionId++;
+         unsigned int transactionId = nextTransactionId++;
          Transaction newTransaction(
              transactionId,
              buyer->getId(),

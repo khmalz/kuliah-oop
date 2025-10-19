@@ -16,10 +16,10 @@ enum OrderStatus
 
 struct Transaction
 {
-  uint transactionId;
-  uint buyerId;
-  uint sellerId;
-  uint itemId;
+  unsigned int transactionId;
+  unsigned int buyerId;
+  unsigned int sellerId;
+  unsigned int itemId;
 
   string itemName;
   string sellerStoreName;
@@ -30,7 +30,7 @@ struct Transaction
   system_clock::time_point transactionDate;
   OrderStatus status;
 
-  Transaction(uint tId, uint bId, uint sId, uint iId, const string &iName, const string &sName, int qty, double price, system_clock::time_point timestamp = system_clock::now(), OrderStatus tStatus = PAID)
+  Transaction(unsigned int tId, unsigned int bId, unsigned int sId, unsigned int iId, const string &iName, const string &sName, int qty, double price, system_clock::time_point timestamp = system_clock::now(), OrderStatus tStatus = PAID)
       : transactionId(tId), buyerId(bId), sellerId(sId), itemId(iId),
         itemName(iName), sellerStoreName(sName),
         quantity(qty), totalPrice(price),
