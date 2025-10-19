@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-BankCustomer::BankCustomer(unsigned int id, const string &name, const string &email, unsigned int bankAccountId, double initialDeposit)
+BankCustomer::BankCustomer(uint id, const string &name, const string &email, uint bankAccountId, double initialDeposit)
     : id(id), name(name), email(email), bankAccountId(bankAccountId), balance(initialDeposit)
 {
    if (initialDeposit > 0)
@@ -14,10 +14,10 @@ BankCustomer::BankCustomer(unsigned int id, const string &name, const string &em
    }
 }
 
-unsigned int BankCustomer::getId() const { return id; }
+uint BankCustomer::getId() const { return id; }
 std::string BankCustomer::getName() const { return name; }
 std::string BankCustomer::getEmail() const { return email; }
-unsigned int BankCustomer::getBankAccountId() const { return bankAccountId; }
+uint BankCustomer::getBankAccountId() const { return bankAccountId; }
 double BankCustomer::getBalance() const { return balance; }
 
 const vector<BankTransactionRecord> &BankCustomer::getHistory() const { return history; }

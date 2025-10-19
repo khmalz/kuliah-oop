@@ -4,7 +4,7 @@ void Items::addItem(const Item &item) { items.push_back(item); }
 
 vector<Item> &Items::getItems() { return items; }
 
-Item *Items::findItemById(unsigned int itemId)
+Item *Items::findItemById(uint itemId)
 {
    for (auto &item : items)
    {
@@ -25,7 +25,7 @@ void Items::showAllItems()
    }
 }
 
-void Items::removeItem(unsigned int itemId)
+void Items::removeItem(uint itemId)
 {
    for (auto it = items.begin(); it != items.end(); ++it)
    {
@@ -38,7 +38,7 @@ void Items::removeItem(unsigned int itemId)
    throw std::runtime_error("Item not found");
 }
 
-void Items::updateItem(unsigned int itemId, const Item &newItem)
+void Items::updateItem(uint itemId, const Item &newItem)
 {
    for (auto &item : items)
    {

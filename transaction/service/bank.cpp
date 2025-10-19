@@ -14,7 +14,7 @@ void Bank::addCustomer(const BankCustomer &customer)
    customers.push_back(customer);
 }
 
-BankCustomer *Bank::findCustomerById(unsigned int id) const
+BankCustomer *Bank::findCustomerById(uint id) const
 {
    for (auto &c : const_cast<vector<BankCustomer> &>(customers))
    {
@@ -85,7 +85,7 @@ void Bank::listDormantAccounts(const vector<Transaction> &log) const
 {
    printHeader("Akun Dormant (Tidak Aktif > 30 Hari)");
 
-   map<unsigned int, system_clock::time_point> lastActivity;
+   map<uint, system_clock::time_point> lastActivity;
 
    for (const auto &record : log)
    {
@@ -139,7 +139,7 @@ void Bank::listTopUsersToday(const vector<Transaction> &log, int n) const
 {
    printHeader("Top " + to_string(n) + " Pengguna Aktif Hari Ini");
 
-   map<unsigned int, int> userTransactionCount;
+   map<uint, int> userTransactionCount;
 
    for (const auto &record : log)
    {
@@ -156,7 +156,7 @@ void Bank::listTopUsersToday(const vector<Transaction> &log, int n) const
       return;
    }
 
-   vector<pair<unsigned int, int>> sortedUsers(userTransactionCount.begin(), userTransactionCount.end());
+   vector<pair<uint, int>> sortedUsers(userTransactionCount.begin(), userTransactionCount.end());
    sort(sortedUsers.begin(), sortedUsers.end(), [](const auto &a, const auto &b)
         { return a.second > b.second; });
 
@@ -178,7 +178,7 @@ void Bank::listMostActiveBuyersToday(const vector<Transaction> &log, int n) cons
 {
    printHeader("Top " + to_string(n) + " Pembeli Aktif Hari Ini (by Transaksi)");
 
-   map<unsigned int, int> buyerActivityCount;
+   map<uint, int> buyerActivityCount;
 
    for (const auto &record : log)
    {
@@ -194,7 +194,7 @@ void Bank::listMostActiveBuyersToday(const vector<Transaction> &log, int n) cons
       return;
    }
 
-   vector<pair<unsigned int, int>> sortedBuyers(buyerActivityCount.begin(), buyerActivityCount.end());
+   vector<pair<uint, int>> sortedBuyers(buyerActivityCount.begin(), buyerActivityCount.end());
    sort(sortedBuyers.begin(), sortedBuyers.end(), [](const auto &a, const auto &b)
         { return a.second > b.second; });
 
@@ -216,7 +216,7 @@ void Bank::listMostActiveSellersToday(const vector<Transaction> &log, int n) con
 {
    printHeader("Top " + to_string(n) + " Penjual Aktif Hari Ini (by Transaksi)");
 
-   map<unsigned int, int> sellerActivityCount;
+   map<uint, int> sellerActivityCount;
 
    for (const auto &record : log)
    {
@@ -232,7 +232,7 @@ void Bank::listMostActiveSellersToday(const vector<Transaction> &log, int n) con
       return;
    }
 
-   vector<pair<unsigned int, int>> sortedSellers(sellerActivityCount.begin(), sellerActivityCount.end());
+   vector<pair<uint, int>> sortedSellers(sellerActivityCount.begin(), sellerActivityCount.end());
    sort(sortedSellers.begin(), sortedSellers.end(), [](const auto &a, const auto &b)
         { return a.second > b.second; });
 

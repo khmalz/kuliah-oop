@@ -17,7 +17,7 @@ using namespace std;
 
 struct TempSellerData
 {
-   unsigned int buyerId;
+   uint buyerId;
    string storeName;
    string storeAddress;
    string storeEmail;
@@ -38,7 +38,7 @@ private:
          {
             try
             {
-               unsigned int id = stoul(data[0]);
+               uint id = stoul(data[0]);
                string name = restoreSpaces(data[1]);
                string email = data[2];
                double balance = stod(data[4]);
@@ -81,7 +81,7 @@ private:
          {
             try
             {
-               unsigned int buyerId = stoul(data[0]);
+               uint buyerId = stoul(data[0]);
                string storeName = restoreSpaces(data[1]);
                string storeAddress = restoreSpaces(data[2]);
                string storeEmail = data[3];
@@ -141,7 +141,7 @@ private:
    {
       cout << "Attempting to load transactions from: " << filename << endl;
       Database::transactionLog.clear();
-      unsigned int maxTransactionId = 0;
+      uint maxTransactionId = 0;
 
       const function<bool(const vector<string> &)> processLine = [&](const vector<string> &data)
       {
@@ -149,10 +149,10 @@ private:
          {
             try
             {
-               unsigned int transactionId = stoul(data[0]);
-               unsigned int buyerId = stoul(data[1]);
-               unsigned int sellerId = stoul(data[2]);
-               unsigned int itemId = stoul(data[3]);
+               uint transactionId = stoul(data[0]);
+               uint buyerId = stoul(data[1]);
+               uint sellerId = stoul(data[2]);
+               uint itemId = stoul(data[3]);
                string itemName = restoreSpaces(data[4]);
                string sellerStoreName = restoreSpaces(data[5]);
                int quantity = stoi(data[6]);

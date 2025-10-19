@@ -25,6 +25,7 @@ add_global_arguments(cpp_args, language : 'cpp')
 
 app_sources = [
   'main.cpp',
+  'typedefs.h',
   'service/bank.cpp',
   'service/bankCustomer.cpp',
   'service/buyer.cpp',

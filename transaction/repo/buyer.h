@@ -15,21 +15,21 @@ struct Transaction;
 class Buyer
 {
 private:
-   unsigned int id;
+   uint id;
    string name;
    string email;
    BankCustomer customer;
 
 public:
-   Buyer(unsigned int id, const string &name, const string &email, double initialDeposit);
+   Buyer(uint id, const string &name, const string &email, double initialDeposit);
 
-   unsigned int getId() const;
+   uint getId() const;
    string getName() const;
    string getEmail() const;
    BankCustomer *getCustomer() const;
 
    void displayBasicInfo() const;
-   void buyItem(unsigned int transactionId, Seller *seller, Items &items, unsigned int itemId, int qty, vector<Transaction> &log);
+   void buyItem(uint transactionId, Seller *seller, Items &items, uint itemId, int qty, vector<Transaction> &log);
    void listOrders(const vector<Transaction> &allTransactions) const;
    void confirmReceipt(vector<Transaction> &allTransactions);
    void cancelOrder(vector<Transaction> &allTransactions, const vector<Seller> &allSellers);

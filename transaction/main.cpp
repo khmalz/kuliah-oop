@@ -46,7 +46,7 @@ void handlePurchaseItem()
    }
    cout << "--------------------------------------------------------\n";
 
-   unsigned int itemId;
+   uint itemId;
    int quantity;
 
    cout << "Masukkan ID Item yang ingin dibeli (ketik 0 untuk batal): ";
@@ -82,7 +82,7 @@ void handlePurchaseItem()
 
    try
    {
-      unsigned int newTransactionId = Database::nextTransactionId++;
+      uint newTransactionId = Database::nextTransactionId++;
       Database::loggedInBuyer->buyItem(newTransactionId, targetSeller, *targetItems, itemId, quantity, Database::transactionLog);
 
       Database::globalMessage = "Pembelian berhasil! ID Transaksi Anda: " + to_string(newTransactionId);
@@ -250,7 +250,7 @@ void handleRegisterBuyer()
       cin.ignore(numeric_limits<streamsize>::max(), '\n');
    }
 
-   unsigned int newId = Database::buyers.size() + 1;
+   uint newId = Database::buyers.size() + 1;
    Database::buyers.emplace_back(newId, name, email, initialDeposit);
 
    Database::mainBank.addCustomer(*(Database::buyers.back().getCustomer()));
@@ -269,7 +269,7 @@ void handleLogin()
    clearScreen();
    printHeader("Login");
 
-   unsigned int id;
+   uint id;
    cout << "Masukkan ID Buyer Anda (ketik 0 untuk batal): ";
    cin >> id;
 

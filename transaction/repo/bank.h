@@ -14,7 +14,7 @@ private:
 
 public:
    void addCustomer(const BankCustomer &customer);
-   BankCustomer *findCustomerById(unsigned int id) const;
+   BankCustomer *findCustomerById(uint id) const;
    const vector<BankCustomer> &getAllCustomers() const;
    void showAllCustomers();
 

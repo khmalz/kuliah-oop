@@ -8,15 +8,15 @@ using namespace std;
 class Item
 {
 private:
-   unsigned int id;
+   uint id;
    string name;
    double price;
    int quantity;
 
 public:
-   Item(unsigned int id, string name, double price, int quantity = 1);
+   Item(uint id, string name, double price, int quantity = 1);
 
-   unsigned int getId() const;
+   uint getId() const;
 
    string getName() const;
    double getPrice() const;
