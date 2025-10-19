@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* A C++ Compiler (GCC, Clang, or MSVC)
+* C++ Compiler (GCC, Clang, or MSVC)
 * **Meson** (Version 1.9.x or newer is recommended)
 * **Ninja**
 
