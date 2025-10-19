@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 
+#include "typedefs.h"
 #include "repo/bank.h"
 #include "repo/buyer.h"
 #include "repo/seller.h"
