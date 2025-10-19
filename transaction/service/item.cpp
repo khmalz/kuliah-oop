@@ -1,9 +1,9 @@
 #include "../repo/item.h"
 
-Item::Item(uint id, string name, double price, int quantity)
+Item::Item(unsigned int id, string name, double price, int quantity)
     : id(id), name(name), price(price), quantity(quantity) {}
 
-uint Item::getId() const
+unsigned int Item::getId() const
 {
    return id;
 }

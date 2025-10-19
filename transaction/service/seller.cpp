@@ -93,7 +93,7 @@ void Seller::updateExistingItem()
     storeItems.showAllItems();
     cout << "----------------------------------------\n";
 
-    uint itemId;
+    unsigned int itemId;
     cout << "Masukkan ID item yang ingin diupdate (ketik 0 untuk batal): ";
     cin >> itemId;
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -171,7 +171,7 @@ void Seller::showTopKItems(const vector<Transaction> &allTransactions) const
     cout << "Berapa item teratas (K): ";
     cin >> k;
 
-    map<uint, int> itemPopularity;
+    map<unsigned int, int> itemPopularity;
     for (const auto &record : allTransactions)
     {
         if (record.sellerId == buyer->getId())
@@ -190,7 +190,7 @@ void Seller::showTopKItems(const vector<Transaction> &allTransactions) const
         return;
     }
 
-    vector<pair<uint, int>> sortedItems(itemPopularity.begin(), itemPopularity.end());
+    vector<pair<unsigned int, int>> sortedItems(itemPopularity.begin(), itemPopularity.end());
     sort(sortedItems.begin(), sortedItems.end(), [](const auto &a, const auto &b)
          { return a.second > b.second; });
 
@@ -233,7 +233,7 @@ void Seller::showLoyalCustomers(const vector<Transaction> &allTransactions) cons
     cout << "Masukkan Tahun (cth: 2025): ";
     cin >> year;
 
-    map<uint, int> customerFrequency;
+    map<unsigned int, int> customerFrequency;
     for (const auto &record : allTransactions)
     {
         if (record.sellerId == buyer->getId())
@@ -252,7 +252,7 @@ void Seller::showLoyalCustomers(const vector<Transaction> &allTransactions) cons
         return;
     }
 
-    vector<pair<uint, int>> sortedCustomers(customerFrequency.begin(), customerFrequency.end());
+    vector<pair<unsigned int, int>> sortedCustomers(customerFrequency.begin(), customerFrequency.end());
     sort(sortedCustomers.begin(), sortedCustomers.end(), [](const auto &a, const auto &b)
          { return a.second > b.second; });
 

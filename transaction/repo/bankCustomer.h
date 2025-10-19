@@ -34,22 +34,22 @@ struct BankTransactionRecord
 class BankCustomer
 {
 private:
-   uint id;
+   unsigned int id;
    string name;
    string email;
-   uint bankAccountId;
+   unsigned int bankAccountId;
    double balance;
    vector<BankTransactionRecord> history;
 
 public:
-   BankCustomer(uint id, const string &name, const string &email, uint bankAccountId, double initialDeposit);
+   BankCustomer(unsigned int id, const string &name, const string &email, unsigned int bankAccountId, double initialDeposit);
 
    BankCustomer() = default;
 
-   uint getId() const;
+   unsigned int getId() const;
    string getName() const;
    string getEmail() const;
-   uint getBankAccountId() const;
+   unsigned int getBankAccountId() const;
    double getBalance() const;
 
    const vector<BankTransactionRecord> &getHistory() const;
